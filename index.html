@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Curiosity Squad Active Pull Requests Dashboard</title>
     <style>
         body {
@@ -21,22 +21,47 @@
           color: #cdd9e5;
         }
 
-        .input-group {
+        /* Top Header Layout */
+        .top-header {
           display: flex;
-          flex-wrap: wrap;
-          align-items: center;
+          flex-direction: column;
           gap: 1rem;
-          margin-bottom: 1rem;
+          margin-bottom: 2rem;
         }
 
-        label {
+        .top-header h1 {
+          margin: 0;
+          font-size: 1.75rem;
+        }
+
+        .input-row {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 1rem;
+          align-items: flex-end;
+        }
+
+        .input-row input {
+          width: 300px;
+          max-width: 100%;
+        }
+
+        .load-button {
+          align-self: flex-start;
+        }
+
+        .dark-mode-toggle {
+          display: flex;
+          justify-content: flex-end;
+        }
+
+        .input-group label {
           font-weight: bold;
         }
 
         input[type="text"],
         input[type="password"] {
           padding: 0.5rem;
-          width: 300px;
           border: 1px solid #ccc;
           border-radius: 4px;
         }
@@ -77,6 +102,7 @@
           padding: 0.5rem 0.75rem;
           border-bottom: 1px solid #ddd;
           box-shadow: 0 2px 3px rgba(0, 0, 0, 0.03);
+          margin: -1rem -1rem 1rem -1rem;
         }
 
         .dark-mode .product-section h2 {
@@ -212,35 +238,27 @@
           background-color: #26354a;
         }
 
-        .theme-toggle {
-          margin-left: auto;
-        }
-
-        /* Responsive layout for narrow screens */
         @media (max-width: 768px) {
           body {
             padding: 1rem;
           }
 
-          h1 {
-            font-size: 1.5rem;
+          .top-header h1 {
+            font-size: 1.4rem;
           }
 
-          .input-group {
+          .input-row {
             flex-direction: column;
             align-items: stretch;
           }
 
-          .input-group input,
-          .input-group button {
+          .input-row input,
+          .load-button button {
             width: 100%;
-            max-width: 100%;
           }
 
-          .theme-toggle {
-            margin-left: 0;
-            width: 100%;
-            justify-content: flex-end;
+          .dark-mode-toggle {
+            justify-content: flex-start;
           }
 
           .product-section {
@@ -289,25 +307,28 @@
     </style>
 </head>
 <body>
-<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 1rem; justify-content: space-between;">
-    <h1 style="margin: 0;">✨ Curiosity Squad Active Pull Requests Dashboard</h1>
-    <div class="input-group theme-toggle" style="margin: 0;">
+<div class="top-header">
+    <h1>✨ Curiosity Squad Active Pull Requests Dashboard</h1>
+
+    <div class="dark-mode-toggle">
         <label><input type="checkbox" id="darkToggle"> Dark Mode</label>
     </div>
-    <div class="input-group" style="margin: 0;">
+
+    <div class="input-row">
         <div>
             <label for="token">GitHub Token:</label><br>
-            <input type="password" id="token" placeholder="Paste your GitHub token here"/>
+            <input type="password" id="token" placeholder="Paste your GitHub token here" />
         </div>
         <div>
             <label for="username">Your GitHub Username:</label><br>
-            <input type="text" id="username" placeholder="Enter your GitHub username"/>
+            <input type="text" id="username" placeholder="Enter your GitHub username" />
         </div>
-        <div>
-            <button onclick="loadPRs()" style="margin-top: 1.5rem;">Load PRs</button>
+        <div class="load-button">
+            <button onclick="loadPRs()">Load PRs</button>
         </div>
     </div>
 </div>
+
 <div id="loader"></div>
 <div id="productSections"></div>
 
