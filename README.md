@@ -1,1 +1,1 @@
-# curiosity.dashboard.github.io
+# curiosity-dashboard.github.io
