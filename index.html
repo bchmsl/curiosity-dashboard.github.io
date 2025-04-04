@@ -5,90 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Curiosity Squad Active Pull Requests Dashboard</title>
     <style>
-        @media (max-width: 768px) {
-      body {
-        padding: 1rem;
-      }
-
-      h1 {
-        font-size: 1.5rem;
-      }
-
-      .input-group {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .input-group input,
-      .input-group button {
-        width: 100%;
-        max-width: 100%;
-      }
-
-      .theme-toggle {
-        margin-left: 0;
-        width: 100%;
-        justify-content: flex-end;
-      }
-
-      .product-section {
-        padding: 1rem 0.5rem;
-      }
-
-      /* 👉 Sticky Repo Headers */
-      .product-section h2 {
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        background: white;
-        padding: 0.5rem 0.75rem;
-        border-bottom: 1px solid #ddd;
-      }
-
-      .dark-mode .product-section h2 {
-        background: #161b22;
-        border-bottom: 1px solid #30363d;
-      }
-
-      .pr-table thead {
-        display: none;
-      }
-
-      .pr-table tbody tr {
-        display: block;
-        margin-bottom: 1rem;
-        border-radius: 8px;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-        background: white;
-      }
-
-      .pr-table td {
-        display: block;
-        padding: 0.5rem 0.75rem;
-        border-bottom: none;
-      }
-
-      .pr-table td[data-label]::before {
-        content: attr(data-label) ": ";
-        font-weight: bold;
-        color: #555;
-        display: block;
-        margin-bottom: 0.25rem;
-      }
-
-      .dark-mode .pr-table tbody tr {
-        background: #1e2633;
-        box-shadow: 0 1px 4px rgba(255,255,255,0.05);
-      }
-
-      .dark-mode .pr-table td[data-label]::before {
-        color: #aaa;
-      }
-
-      .dark-mode .pr-table td {
-        border-color: transparent;
-      }
-    }
         body {
           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
           padding: 2rem;
@@ -154,13 +70,19 @@
         }
 
         .product-section h2 {
-          margin-top: 0;
-          color: #2c3e50;
-          cursor: pointer;
+          position: sticky;
+          top: 0;
+          z-index: 10;
+          background: white;
+          padding: 0.5rem 0.75rem;
+          border-bottom: 1px solid #ddd;
+          box-shadow: 0 2px 3px rgba(0, 0, 0, 0.03);
         }
 
         .dark-mode .product-section h2 {
-          color: #cdd9e5;
+          background: #161b22;
+          border-bottom: 1px solid #30363d;
+          box-shadow: 0 2px 4px rgba(255, 255, 255, 0.03);
         }
 
         .pr-table {
@@ -294,6 +216,7 @@
           margin-left: auto;
         }
 
+        /* Responsive layout for narrow screens */
         @media (max-width: 768px) {
           body {
             padding: 1rem;
