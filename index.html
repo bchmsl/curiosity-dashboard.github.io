@@ -235,6 +235,17 @@
           padding: 0.5rem;
           background: #fff;
         }
+        .section-body {
+          overflow-x: auto;
+        }
+        .pr-table {
+          min-width: 800px;
+        }
+      }
+      .pr-table td a {
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        display: block;
       }
     </style>
   </head>
@@ -494,7 +505,7 @@
                   }">${changedFiles}</span> files changed
                 </div>
               </td>
-              <td>
+              <td data-label="Approved">
               <div>
                 <strong style="color: #a6ffac;">${approvalHeader}</strong><br>
                 ${
@@ -507,7 +518,7 @@
               </div>
             </td>
 
-            <td>
+            <td data-label="Changes Requested">
               <div>
                 <strong style="color: #ff6b6b;">${changesHeader}</strong><br>
                 ${
@@ -520,7 +531,7 @@
               </div>
             </td>
 
-            <td>
+            <td data-label="Commented">
               <div>
                 <strong style="color: #fac3c3;">${commentedHeader}</strong><br>
                 ${
@@ -533,7 +544,7 @@
               </div>
             </td>
 
-              <td><div><strong>${awaitingHeader}</strong><br>${
+              <td data-label="Awaiting Review"><div><strong>${awaitingHeader}</strong><br>${
               awaitingBlocks.join("") || "None"
             }</div></td>
             `;
