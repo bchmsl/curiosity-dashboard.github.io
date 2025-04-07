@@ -196,6 +196,46 @@
       .collapsible-header.collapsed::after {
         transform: rotate(90deg);
       }
+      @media (max-width: 768px) {
+        .pr-table thead {
+          display: none;
+        }
+
+        .pr-table,
+        .pr-table tbody,
+        .pr-table tr,
+        .pr-table td {
+          display: block;
+          width: 100%;
+        }
+
+        .pr-table td {
+          position: relative;
+          padding-left: 1rem;
+          padding-top: 0.5rem;
+          padding-bottom: 0.5rem;
+          border-bottom: 1px solid #eee;
+        }
+
+        .pr-table td::before {
+          content: attr(data-label);
+          position: absolute;
+          left: 0;
+          top: 0.5rem;
+          font-weight: bold;
+          font-size: 0.75rem;
+          color: #999;
+          padding-left: 0.25rem;
+        }
+
+        .pr-table tr {
+          margin-bottom: 1rem;
+          border: 1px solid #ddd;
+          border-radius: 8px;
+          padding: 0.5rem;
+          background: #fff;
+        }
+      }
     </style>
   </head>
   <body>
@@ -427,7 +467,7 @@
             row.className = pr.draft ? "draft" : "";
 
             row.innerHTML = `
-             <td>
+             <td data-label="Title">
   <div style="display: flex; gap: 0.5rem; align-items: flex-start;">
     <div style="flex-shrink: 0;">${statusLabel}</div>
     <div style="flex: 1; min-width: 0;">
@@ -439,12 +479,12 @@
     </div>
   </div>
 </td>
-              <td>${authorBlock}</td>
-              <td>
+              <td data-label="Author">${authorBlock}</td>
+              <td data-label="Created">
                 <span>${timeAgo(pr.created_at)}</span>
                 ${newBadge}
               </td>
-              <td>
+              <td data-label="Commits/Files">
                 <div>
                   <span style="font-weight: bold; color: ${
                     commitCount > 10 ? "#ff6b6b" : "inherit"
