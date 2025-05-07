@@ -82,9 +82,78 @@
 	}
 
 	#loader {
-		margin-top: 1rem;
-		font-style: italic;
-		color: #888;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		margin: 3rem auto;
+		width: fit-content;
+		text-align: center;
+	}
+
+	.shimmer-bar {
+		width: 300px;
+		height: 1.2rem;
+		border-radius: 6px;
+		background: linear-gradient(90deg,
+			#d0d0d0 25%,
+			#f5f5f5 50%,
+			#d0d0d0 75%);
+		background-size: 200% 100%;
+		animation: shimmer 1.5s infinite;
+	}
+
+	.dark-mode .shimmer-bar {
+		background: linear-gradient(90deg,
+			#3a3f4b 25%,
+			#9ca3af 50%,
+			#3a3f4b 75%);
+		background-size: 200% 100%;
+		animation: shimmer 1.5s infinite;
+	}
+
+	@keyframes shimmer {
+		0% {
+			background-position: 200% 0;
+		}
+
+		100% {
+			background-position: -200% 0;
+		}
+	}
+
+	.loading-text {
+		font-size: 1.1rem;
+		font-weight: bold;
+		color: #333;
+		margin-top: 0.75rem;
+	}
+
+	.dark-mode .loading-text {
+		color: #f0f6fc;
+	}
+
+	.dots::after {
+		content: "";
+		animation: dots 2s steps(3, end) infinite;
+	}
+
+	@keyframes dots {
+		0% {
+			content: "";
+		}
+
+		33% {
+			content: ".";
+		}
+
+		66% {
+			content: "..";
+		}
+
+		100% {
+			content: "...";
+		}
 	}
 
 	.product-section {
@@ -348,7 +417,12 @@
 			</div>
 		</div>
 	</div>
-	<div id="loader"></div>
+	<div id="loader">
+		<div class="shimmer-bar"></div>
+		<div class="loading-text">
+			<span id="loadingMessage">Loading…</span><span class="dots"></span>
+		</div>
+	</div>
 	<div id="productSections"></div>
 	<script>
 	const ORG = "SpaceBank";
@@ -372,7 +446,7 @@
 	function isNew(createdAt) {
 		const createdTime = new Date(createdAt).getTime();
 		const now = Date.now();
-		const TWO_WEEKS_MS = 24 * 60 * 60 * 1000;
+		const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
 		return now - createdTime < TWO_WEEKS_MS;
 	}
 	async function loadPRs() {
@@ -381,15 +455,17 @@
 		if(!token || !reviewer) return alert("Please enter both token and username");
 		localStorage.setItem("github_token", token);
 		localStorage.setItem("github_username", reviewer);
-		document.getElementById("loader").innerText = "Loading...";
+		document.getElementById("loader").style.display = "block";
 		const headers = {
-			Authorization: `token ${token}`
+			Authorization: `token ${token}`,
 		};
 		const container = document.getElementById("productSections");
 		container.innerHTML = "";
+		const loadingMessage = document.getElementById("loadingMessage");
+		loadingMessage.innerText = `0/${REPOS.length} Loaded`;
 		for(const repo of REPOS) {
 			const prs = await fetch(`https://api.github.com/repos/${ORG}/${repo}/pulls?state=open&per_page=100`, {
-				headers
+				headers,
 			}).then((res) => res.json());
 			const cleanRepoName = repo.replace("Android-Space-Feature-", "");
 			const section = document.createElement("div");
@@ -403,11 +479,10 @@
 				// (temporarily turned off)
 				// if (!AUTHORS.includes(author)) continue;
 				const reviews = await fetch(pr.url + "/reviews", {
-					headers
-				}).then(
-					(res) => res.json());
+					headers,
+				}).then((res) => res.json());
 				const prDetails = await fetch(pr.url, {
-					headers
+					headers,
 				}).then((res) => res.json()); // Fetch full PR details
 				const commitCount = prDetails.commits;
 				const fileCount = prDetails.changed_files;
@@ -423,7 +498,7 @@
 				const userBlock = async (username) => {
 					const highlightClass = username === reviewer ? "highlight" : "";
 					const res = await fetch(`https://api.github.com/users/${username}`, {
-						headers
+						headers,
 					});
 					const data = await res.json();
 					return `<div class="user-block ${highlightClass}"><img src="${data.avatar_url}" alt="${username}" /> ${username}</div>`;
@@ -507,8 +582,11 @@
 				section.querySelector("table").appendChild(tbody);
 				container.appendChild(section);
 			}
+			container.appendChild(section);
+			const loadedSoFar = container.children.length;
+			loadingMessage.innerText = `${loadedSoFar}/${REPOS.length} Loaded`;
 		}
-		document.getElementById("loader").innerText = "";
+		document.getElementById("loader").style.display = "none";
 	}
 	window.addEventListener("DOMContentLoaded", () => {
 		if(localStorage.getItem("dark_mode") === "true") {
