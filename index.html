@@ -1,582 +1,566 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Curiosity Squad Active Pull Requests Dashboard</title>
-    <style>
-      body {
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        padding: 2rem;
-        background: #f4f6f8;
-        color: #333;
-      }
 
-      h1 {
-        color: #2c3e50;
-        margin-bottom: 1rem;
-      }
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Curiosity Squad Active Pull Requests Dashboard</title>
+	<style>
+	body {
+		font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+		padding: 2rem;
+		background: #f4f6f8;
+		color: #333;
+	}
 
-      .dark-mode h1 {
-        color: #cdd9e5;
-      }
+	h1 {
+		color: #2c3e50;
+		margin-bottom: 1rem;
+	}
 
-      /* Top Header Layout */
-      .top-header {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        margin-bottom: 2rem;
-      }
+	.dark-mode h1 {
+		color: #cdd9e5;
+	}
 
-      .top-header h1 {
-        margin: 0;
-        font-size: 1.75rem;
-      }
+	/* Top Header Layout */
+	.top-header {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		margin-bottom: 2rem;
+	}
 
-      .input-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1rem;
-        align-items: flex-end;
-      }
+	.top-header h1 {
+		margin: 0;
+		font-size: 1.75rem;
+	}
 
-      .input-row input {
-        width: 300px;
-        max-width: 100%;
-      }
+	.input-row {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 1rem;
+		align-items: flex-end;
+	}
 
-      .load-button {
-        align-self: flex-start;
-      }
+	.input-row input {
+		width: 300px;
+		max-width: 100%;
+	}
 
-      .dark-mode-toggle {
-        display: flex;
-        justify-content: flex-end;
-      }
+	.load-button {
+		align-self: flex-start;
+	}
 
-      .input-group label {
-        font-weight: bold;
-      }
+	.dark-mode-toggle {
+		display: flex;
+		justify-content: flex-end;
+	}
 
-      input[type="text"],
-      input[type="password"] {
-        padding: 0.5rem;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-      }
+	.input-group label {
+		font-weight: bold;
+	}
 
-      button {
-        padding: 0.5rem 1rem;
-        background-color: #2c3e50;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        margin-top: 1rem;
-      }
+	input[type="text"],
+	input[type="password"] {
+		padding: 0.5rem;
+		border: 1px solid #ccc;
+		border-radius: 4px;
+	}
 
-      button:hover {
-        background-color: #34495e;
-      }
+	button {
+		padding: 0.5rem 1rem;
+		background-color: #2c3e50;
+		color: white;
+		border: none;
+		border-radius: 4px;
+		cursor: pointer;
+		margin-top: 1rem;
+	}
 
-      #loader {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        margin: 3rem auto;
-        width: fit-content;
-        text-align: center;
-      }
+	button:hover {
+		background-color: #34495e;
+	}
 
-      .shimmer-bar {
-        width: 300px;
-        height: 1.2rem;
-        border-radius: 6px;
-        background: linear-gradient(
-          90deg,
-          #d0d0d0 25%,
-          #f5f5f5 50%,
-          #d0d0d0 75%
-        );
-        background-size: 200% 100%;
-        animation: shimmer 1.5s infinite;
-      }
+	#loader {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		margin: 3rem auto;
+		width: fit-content;
+		text-align: center;
+	}
 
-      .dark-mode .shimmer-bar {
-        background: linear-gradient(
-          90deg,
-          #3a3f4b 25%,
-          #9ca3af 50%,
-          #3a3f4b 75%
-        );
-        background-size: 200% 100%;
-        animation: shimmer 1.5s infinite;
-      }
+	.shimmer-bar {
+		width: 300px;
+		height: 1.2rem;
+		border-radius: 6px;
+		background: linear-gradient(90deg,
+			#d0d0d0 25%,
+			#f5f5f5 50%,
+			#d0d0d0 75%);
+		background-size: 200% 100%;
+		animation: shimmer 1.5s infinite;
+	}
 
-      @keyframes shimmer {
-        0% {
-          background-position: 200% 0;
-        }
-        100% {
-          background-position: -200% 0;
-        }
-      }
-      .loading-text {
-        font-size: 1.1rem;
-        font-weight: bold;
-        color: #333;
-        margin-top: 0.75rem;
-      }
+	.dark-mode .shimmer-bar {
+		background: linear-gradient(90deg,
+			#3a3f4b 25%,
+			#9ca3af 50%,
+			#3a3f4b 75%);
+		background-size: 200% 100%;
+		animation: shimmer 1.5s infinite;
+	}
 
-      .dark-mode .loading-text {
-        color: #f0f6fc;
-      }
-      .dots::after {
-        content: "";
-        animation: dots 2s steps(3, end) infinite;
-      }
+	@keyframes shimmer {
+		0% {
+			background-position: 200% 0;
+		}
 
-      @keyframes dots {
-        0% {
-          content: "";
-        }
-        33% {
-          content: ".";
-        }
-        66% {
-          content: "..";
-        }
-        100% {
-          content: "...";
-        }
-      }
+		100% {
+			background-position: -200% 0;
+		}
+	}
 
-      .product-section {
-        margin-top: 2rem;
-        padding: 1rem;
-        background: #fff;
-        border-radius: 8px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-      }
+	.loading-text {
+		font-size: 1.1rem;
+		font-weight: bold;
+		color: #333;
+		margin-top: 0.75rem;
+	}
 
-      .product-section h2 {
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        background: white;
-        padding: 0.5rem 0.75rem;
-        border-bottom: 1px solid #ddd;
-        box-shadow: 0 2px 3px rgba(0, 0, 0, 0.03);
-        margin: -1rem -1rem 1rem -1rem;
-      }
+	.dark-mode .loading-text {
+		color: #f0f6fc;
+	}
 
-      .dark-mode .product-section h2 {
-        background: #161b22;
-        border-bottom: 1px solid #30363d;
-        box-shadow: 0 2px 4px rgba(255, 255, 255, 0.03);
-      }
+	.dots::after {
+		content: "";
+		animation: dots 2s steps(3, end) infinite;
+	}
 
-      .pr-table {
-        width: 100%;
-        table-layout: fixed;
-        border-collapse: collapse;
-        margin-top: 1rem;
-        background-color: white;
-        border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-      }
+	@keyframes dots {
+		0% {
+			content: "";
+		}
 
-      .pr-table th,
-      .pr-table td {
-        padding: 0.75rem;
-        border-bottom: 1px solid #eee;
-        text-align: left;
-        vertical-align: top;
-        word-wrap: break-word;
-      }
+		33% {
+			content: ".";
+		}
 
-      .pr-table th {
-        background: #2c3e50;
-        color: white;
-        font-weight: bold;
-        position: sticky;
-        top: 0;
-        z-index: 1;
-      }
+		66% {
+			content: "..";
+		}
 
-      tr:hover {
-        background-color: #f1f1f1;
-      }
+		100% {
+			content: "...";
+		}
+	}
 
-      .draft {
-        opacity: 0.6;
-      }
+	.product-section {
+		margin-top: 2rem;
+		padding: 1rem;
+		background: #fff;
+		border-radius: 8px;
+		box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+	}
 
-      a {
-        color: #3498db;
-        text-decoration: none;
-      }
+	.product-section h2 {
+		position: sticky;
+		top: 0;
+		z-index: 10;
+		background: white;
+		padding: 0.5rem 0.75rem;
+		border-bottom: 1px solid #ddd;
+		box-shadow: 0 2px 3px rgba(0, 0, 0, 0.03);
+		margin: -1rem -1rem 1rem -1rem;
+	}
 
-      a:hover {
-        text-decoration: underline;
-      }
+	.dark-mode .product-section h2 {
+		background: #161b22;
+		border-bottom: 1px solid #30363d;
+		box-shadow: 0 2px 4px rgba(255, 255, 255, 0.03);
+	}
 
-      .highlight {
-        font-weight: bold;
-        color: #d63384;
-        background-color: #fff0f5;
-        padding: 0.1rem 0.3rem;
-        border-radius: 4px;
-        display: inline-block;
-      }
+	.pr-table {
+		width: 100%;
+		table-layout: fixed;
+		border-collapse: collapse;
+		margin-top: 1rem;
+		background-color: white;
+		border-radius: 8px;
+		overflow: hidden;
+		box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+	}
 
-      .user-block {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        margin-bottom: 0.25rem;
-        flex-wrap: wrap;
-      }
+	.pr-table th,
+	.pr-table td {
+		padding: 0.75rem;
+		border-bottom: 1px solid #eee;
+		text-align: left;
+		vertical-align: top;
+		word-wrap: break-word;
+	}
 
-      .user-block img {
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-      }
+	.pr-table th {
+		background: #2c3e50;
+		color: white;
+		font-weight: bold;
+		position: sticky;
+		top: 0;
+		z-index: 1;
+	}
 
-      .label-status {
-        display: inline-block;
-        padding: 2px 8px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        border-radius: 9999px;
-        margin-left: 8px;
-      }
+	tr:hover {
+		background-color: #f1f1f1;
+	}
 
-      .label-open {
-        background-color: #dafbe1;
-        color: #1a7f37;
-      }
+	.draft {
+		opacity: 0.6;
+	}
 
-      .label-draft {
-        background-color: #eaeef2;
-        color: #57606a;
-      }
+	a {
+		color: #3498db;
+		text-decoration: none;
+	}
 
-      .dark-mode {
-        background: #0d1117;
-        color: #c9d1d9;
-      }
+	a:hover {
+		text-decoration: underline;
+	}
 
-      .dark-mode .product-section {
-        background: #161b22;
-      }
+	.highlight {
+		font-weight: bold;
+		color: #d63384;
+		background-color: #fff0f5;
+		padding: 0.1rem 0.3rem;
+		border-radius: 4px;
+		display: inline-block;
+	}
 
-      .dark-mode .pr-table {
-        background-color: #161b22;
-      }
+	.user-block {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin-bottom: 0.25rem;
+		flex-wrap: wrap;
+	}
 
-      .dark-mode .pr-table th {
-        background: #21262d;
-        color: #f0f6fc;
-      }
+	.user-block img {
+		width: 20px;
+		height: 20px;
+		border-radius: 50%;
+	}
 
-      .dark-mode .pr-table td {
-        border-color: #30363d;
-      }
+	.label-status {
+		display: inline-block;
+		padding: 2px 8px;
+		font-size: 0.75rem;
+		font-weight: 600;
+		border-radius: 9999px;
+		margin-left: 8px;
+	}
 
-      .dark-mode a {
-        color: #58a6ff;
-      }
+	.label-open {
+		background-color: #dafbe1;
+		color: #1a7f37;
+	}
 
-      .dark-mode .label-open {
-        background-color: #238636;
-        color: #ffffff;
-      }
+	.label-draft {
+		background-color: #eaeef2;
+		color: #57606a;
+	}
 
-      .dark-mode .label-draft {
-        background-color: #444c56;
-        color: #8b949e;
-      }
+	.dark-mode {
+		background: #0d1117;
+		color: #c9d1d9;
+	}
 
-      .dark-mode tr:hover {
-        background-color: #26354a;
-      }
+	.dark-mode .product-section {
+		background: #161b22;
+	}
 
-      .new-tag {
-        background-color: #ff4757;
-        color: white;
-        font-size: 0.65rem;
-        padding: 2px 6px;
-        border-radius: 9999px;
-        margin-left: 0.5rem;
-        vertical-align: middle;
-      }
+	.dark-mode .pr-table {
+		background-color: #161b22;
+	}
 
-      .dark-mode .new-tag {
-        background-color: #ff6b81;
-      }
+	.dark-mode .pr-table th {
+		background: #21262d;
+		color: #f0f6fc;
+	}
 
-      .files-warning {
-        color: #d73a49;
-        font-weight: 600;
-      }
+	.dark-mode .pr-table td {
+		border-color: #30363d;
+	}
 
-      @media (max-width: 768px) {
-        body {
-          padding: 1rem;
-        }
+	.dark-mode a {
+		color: #58a6ff;
+	}
 
-        .top-header h1 {
-          font-size: 1.4rem;
-        }
+	.dark-mode .label-open {
+		background-color: #238636;
+		color: #ffffff;
+	}
 
-        .input-row {
-          flex-direction: column;
-          align-items: stretch;
-        }
+	.dark-mode .label-draft {
+		background-color: #444c56;
+		color: #8b949e;
+	}
 
-        .input-row input,
-        .load-button button {
-          width: 100%;
-        }
+	.dark-mode tr:hover {
+		background-color: #26354a;
+	}
 
-        .dark-mode-toggle {
-          justify-content: flex-start;
-        }
+	.new-tag {
+		background-color: #ff4757;
+		color: white;
+		font-size: 0.65rem;
+		padding: 2px 6px;
+		border-radius: 9999px;
+		margin-left: 0.5rem;
+		vertical-align: middle;
+	}
 
-        .product-section {
-          padding: 1rem 0.5rem;
-        }
+	.dark-mode .new-tag {
+		background-color: #ff6b81;
+	}
 
-        .pr-table thead {
-          display: none;
-        }
+	.files-warning {
+		color: #d73a49;
+		font-weight: 600;
+	}
 
-        .pr-table tbody tr {
-          display: block;
-          margin-bottom: 1rem;
-          border-radius: 8px;
-          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-          background: white;
-        }
+	.product-section.collapsed .pr-table,
+	.product-section.collapsed .pr-table+div {
+		display: none;
+	}
 
-        .pr-table td {
-          display: block;
-          padding: 0.5rem 0.75rem;
-          border-bottom: none;
-        }
+	.product-section h2 {
+		cursor: pointer;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
 
-        .pr-table td[data-label]::before {
-          content: attr(data-label) ": ";
-          font-weight: bold;
-          color: #555;
-          display: block;
-          margin-bottom: 0.25rem;
-        }
+	.collapse-toggle {
+		font-size: 0.9rem;
+		color: #888;
+	}
 
-        .dark-mode .pr-table tbody tr {
-          background: #1e2633;
-          box-shadow: 0 1px 4px rgba(255, 255, 255, 0.05);
-        }
+	.dark-mode .collapse-toggle {
+		color: #aaa;
+	}
 
-        .dark-mode .pr-table td[data-label]::before {
-          color: #aaa;
-        }
+	.repo-link-icon {
+		font-size: 0.9rem;
+		color: #888;
+		margin-right: 0.5rem;
+		text-decoration: none;
+	}
 
-        .dark-mode .pr-table td {
-          border-color: transparent;
-        }
-      }
-    </style>
-  </head>
+	.repo-link-icon:hover {
+		color: #3498db;
+	}
 
-  <body>
-    <div class="top-header">
-      <h1>✨ Curiosity Squad Active Pull Requests Dashboard</h1>
-      <div class="dark-mode-toggle">
-        <label><input type="checkbox" id="darkToggle" /> Dark Mode</label>
-      </div>
-      <div class="input-row">
-        <div>
-          <label for="token">GitHub Token:</label><br />
-          <input
-            type="password"
-            id="token"
-            placeholder="Paste your GitHub token here"
-          />
-        </div>
-        <div>
-          <label for="username">Your GitHub Username:</label><br />
-          <input
-            type="text"
-            id="username"
-            placeholder="Enter your GitHub username"
-          />
-        </div>
-        <div class="load-button">
-          <button onclick="loadPRs()">Load PRs</button>
-        </div>
-      </div>
-    </div>
-    <div id="loader">
-      <div class="shimmer-bar"></div>
-      <div class="loading-text">
-        <span id="loadingMessage">Loading…</span><span class="dots"></span>
-      </div>
-    </div>
-    <div id="productSections"></div>
-    <script>
-      const ORG = "SpaceBank";
-      const AUTHORS = [
-        "erlan-andersen",
-        "gioqemoklidze",
-        "Prangula",
-        "akogachechiladze1",
-        "Davit-Tsiskarashvili",
-        "jibladzegiorgi94",
-        "bchmsl",
-        "BekaChachua",
-        "hayksmnSP",
-      ];
-      const REPOS = [
-        "Android-Space-Feature-Payment",
-        "Android-Space-Feature-Transfers",
-        "Android-Space-Feature-Deposit",
-        "Android-Space-Feature-Cards",
-        "Android-Space-Feature-CardOrder",
-        "Android-Space-Feature-DigitalCardOrder",
-        "Android-Space-Feature-Remittance",
-      ];
+	.dark-mode .repo-link-icon {
+		color: #aaa;
+	}
 
-      function timeAgo(dateString) {
-        const date = new Date(dateString);
-        const now = new Date();
-        const diff = Math.floor((now - date) / 1000);
-        if (diff < 60) return `${diff}s ago`;
-        if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-        if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-        if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
-        return `${date.toLocaleDateString(undefined, {
+	.dark-mode .repo-link-icon:hover {
+		color: #58a6ff;
+	}
+
+	@media (max-width: 768px) {
+		body {
+			padding: 1rem;
+		}
+
+		.top-header h1 {
+			font-size: 1.4rem;
+		}
+
+		.input-row {
+			flex-direction: column;
+			align-items: stretch;
+		}
+
+		.input-row input,
+		.load-button button {
+			width: 100%;
+		}
+
+		.dark-mode-toggle {
+			justify-content: flex-start;
+		}
+
+		.product-section {
+			padding: 1rem 0.5rem;
+		}
+
+		.pr-table thead {
+			display: none;
+		}
+
+		.pr-table tbody tr {
+			display: block;
+			margin-bottom: 1rem;
+			border-radius: 8px;
+			box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+			background: white;
+		}
+
+		.pr-table td {
+			display: block;
+			padding: 0.5rem 0.75rem;
+			border-bottom: none;
+		}
+
+		.pr-table td[data-label]::before {
+			content: attr(data-label) ": ";
+			font-weight: bold;
+			color: #555;
+			display: block;
+			margin-bottom: 0.25rem;
+		}
+
+		.dark-mode .pr-table tbody tr {
+			background: #1e2633;
+			box-shadow: 0 1px 4px rgba(255, 255, 255, 0.05);
+		}
+
+		.dark-mode .pr-table td[data-label]::before {
+			color: #aaa;
+		}
+
+		.dark-mode .pr-table td {
+			border-color: transparent;
+		}
+	}
+	</style>
+</head>
+
+<body>
+	<div class="top-header">
+		<h1>✨ Curiosity Squad Active Pull Requests Dashboard</h1>
+		<div class="dark-mode-toggle">
+			<label><input type="checkbox" id="darkToggle" /> Dark Mode</label>
+		</div>
+		<div class="input-row">
+			<div>
+				<label for="token">GitHub Token:</label><br />
+				<input type="password" id="token" placeholder="Paste your GitHub token here" />
+			</div>
+			<div>
+				<label for="username">Your GitHub Username:</label><br />
+				<input type="text" id="username" placeholder="Enter your GitHub username" />
+			</div>
+			<div class="load-button">
+				<button onclick="loadPRs()">Load PRs</button>
+			</div>
+		</div>
+	</div>
+	<div id="loader">
+		<div class="shimmer-bar"></div>
+		<div class="loading-text">
+			<span id="loadingMessage">Loading…</span><span class="dots"></span>
+		</div>
+	</div>
+	<div id="productSections"></div>
+	<script>
+	const ORG = "SpaceBank";
+	const AUTHORS = ["erlan-andersen", "gioqemoklidze", "Prangula", "akogachechiladze1", "Davit-Tsiskarashvili", "jibladzegiorgi94", "bchmsl", "BekaChachua", "hayksmnSP", ];
+	const REPOS = ["Android-Space-Feature-Payment", "Android-Space-Feature-Transfers", "Android-Space-Feature-Deposit", "Android-Space-Feature-Cards", "Android-Space-Feature-CardOrder", "Android-Space-Feature-DigitalCardOrder", "Android-Space-Feature-Remittance", ];
+
+	function timeAgo(dateString) {
+		const date = new Date(dateString);
+		const now = new Date();
+		const diff = Math.floor((now - date) / 1000);
+		if(diff < 60) return `${diff}s ago`;
+		if(diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+		if(diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+		if(diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+		return `${date.toLocaleDateString(undefined, {
           month: "short",
           day: "numeric",
         })}`;
-      }
+	}
 
-      function isNew(createdAt) {
-        const createdTime = new Date(createdAt).getTime();
-        const now = Date.now();
-        const TWO_WEEKS_MS = 24 * 60 * 60 * 1000;
-        return now - createdTime < TWO_WEEKS_MS;
-      }
-      async function loadPRs() {
-        const token = document.getElementById("token").value;
-        const reviewer = document.getElementById("username").value;
-        if (!token || !reviewer)
-          return alert("Please enter both token and username");
-        localStorage.setItem("github_token", token);
-        localStorage.setItem("github_username", reviewer);
-        document.getElementById("loader").style.display = "block";
-        const headers = {
-          Authorization: `token ${token}`,
-        };
-        const container = document.getElementById("productSections");
-        container.innerHTML = "";
-
-        const loadingMessage = document.getElementById("loadingMessage");
-        loadingMessage.innerText = `0/${REPOS.length} Repositories Loaded`;
-
-        for (const repo of REPOS) {
-          const prs = await fetch(
-            `https://api.github.com/repos/${ORG}/${repo}/pulls?state=open&per_page=100`,
-            {
-              headers,
-            }
-          ).then((res) => res.json());
-          const cleanRepoName = repo.replace("Android-Space-Feature-", "");
-          const section = document.createElement("div");
-          section.className = "product-section";
-          let hasNew = false;
-          const tbody = document.createElement("tbody");
-          for (const pr of prs) {
-            const newPR = isNew(pr.created_at);
-            if (newPR) hasNew = true;
-            const author = pr.user.login;
-            // (temporarily turned off)
-            // if (!AUTHORS.includes(author)) continue;
-            const reviews = await fetch(pr.url + "/reviews", {
-              headers,
-            }).then((res) => res.json());
-            const prDetails = await fetch(pr.url, {
-              headers,
-            }).then((res) => res.json()); // Fetch full PR details
-            const commitCount = prDetails.commits;
-            const fileCount = prDetails.changed_files;
-            const latestReviews = new Map();
-            for (const review of reviews)
-              latestReviews.set(review.user.login, review.state);
-            const approvals = [...latestReviews.entries()]
-              .filter(([_, state]) => state === "APPROVED")
-              .map(([user]) => user);
-            const changesRequested = [...latestReviews.entries()]
-              .filter(([_, state]) => state === "CHANGES_REQUESTED")
-              .map(([user]) => user);
-            const requestedReviewers = pr.requested_reviewers.map(
-              (r) => r.login
-            );
-            const submittedReviewers = [
-              ...new Set(reviews.map((r) => r.user.login)),
-            ];
-            const awaitingReviewers = requestedReviewers.filter(
-              (r) => !submittedReviewers.includes(r)
-            );
-            const userBlock = async (username) => {
-              const highlightClass = username === reviewer ? "highlight" : "";
-              const res = await fetch(
-                `https://api.github.com/users/${username}`,
-                {
-                  headers,
-                }
-              );
-              const data = await res.json();
-              return `<div class="user-block ${highlightClass}"><img src="${data.avatar_url}" alt="${username}" /> ${username}</div>`;
-            };
-            const authorBlock = await userBlock(author);
-            const approvalBlocks = await Promise.all(approvals.map(userBlock));
-            const changeBlocks = await Promise.all(
-              changesRequested.map(userBlock)
-            );
-            const awaitingBlocks = await Promise.all(
-              awaitingReviewers.map(userBlock)
-            );
-            const commented = [...latestReviews.entries()]
-              .filter(
-                ([user, state]) =>
-                  state === "COMMENTED" &&
-                  user !== author &&
-                  user !== "zura-adod"
-              )
-              .map(([user]) => user);
-            const totalReviewerSet = new Set([
-              ...requestedReviewers,
-              ...approvals,
-              ...changesRequested,
-              ...commented,
-            ]);
-            const totalReviewers = totalReviewerSet.size;
-            const approvalHeader = `Approvals (${approvals.length}/${totalReviewers})`;
-            const changesHeader = `Changes Requested (${changesRequested.length}/${totalReviewers})`;
-            const commentedHeader = `Commented (${commented.length}/${totalReviewers})`;
-            const awaitingHeader = `Awaiting (${awaitingReviewers.length}/${totalReviewers})`;
-            const statusLabel = `<span class="label-status ${
+	function isNew(createdAt) {
+		const createdTime = new Date(createdAt).getTime();
+		const now = Date.now();
+		const TWO_WEEKS_MS = 24 * 60 * 60 * 1000;
+		return now - createdTime < TWO_WEEKS_MS;
+	}
+	async function loadPRs() {
+		const token = document.getElementById("token").value;
+		const reviewer = document.getElementById("username").value;
+		if(!token || !reviewer) return alert("Please enter both token and username");
+		localStorage.setItem("github_token", token);
+		localStorage.setItem("github_username", reviewer);
+		document.getElementById("loader").style.display = "block";
+		const headers = {
+			Authorization: `token ${token}`,
+		};
+		const container = document.getElementById("productSections");
+		container.innerHTML = "";
+		const loadingMessage = document.getElementById("loadingMessage");
+		loadingMessage.innerText = `0/${REPOS.length} Repositories Loaded`;
+		for(const repo of REPOS) {
+			const prs = await fetch(`https://api.github.com/repos/${ORG}/${repo}/pulls?state=open&per_page=100`, {
+				headers,
+			}).then((res) => res.json());
+			const cleanRepoName = repo.replace("Android-Space-Feature-", "");
+			const section = document.createElement("div");
+			section.className = "product-section";
+			let hasNew = false;
+			const tbody = document.createElement("tbody");
+			for(const pr of prs) {
+				const newPR = isNew(pr.created_at);
+				if(newPR) hasNew = true;
+				const author = pr.user.login;
+				// (temporarily turned off)
+				// if (!AUTHORS.includes(author)) continue;
+				const reviews = await fetch(pr.url + "/reviews", {
+					headers,
+				}).then((res) => res.json());
+				const prDetails = await fetch(pr.url, {
+					headers,
+				}).then((res) => res.json()); // Fetch full PR details
+				const commitCount = prDetails.commits;
+				const fileCount = prDetails.changed_files;
+				const latestReviews = new Map();
+				for(const review of reviews) latestReviews.set(review.user.login, review.state);
+				const approvals = [...latestReviews.entries()].filter(([_, state]) => state === "APPROVED").map(([user]) => user);
+				const changesRequested = [...latestReviews.entries()].filter(([_, state]) => state === "CHANGES_REQUESTED").map(([user]) => user);
+				const requestedReviewers = pr.requested_reviewers.map(
+					(r) => r.login);
+				const submittedReviewers = [...new Set(reviews.map((r) => r.user.login)), ];
+				const awaitingReviewers = requestedReviewers.filter(
+					(r) => !submittedReviewers.includes(r));
+				const userBlock = async (username) => {
+					const highlightClass = username === reviewer ? "highlight" : "";
+					const res = await fetch(`https://api.github.com/users/${username}`, {
+						headers,
+					});
+					const data = await res.json();
+					return `<div class="user-block ${highlightClass}"><img src="${data.avatar_url}" alt="${username}" /> ${username}</div>`;
+				};
+				const authorBlock = await userBlock(author);
+				const approvalBlocks = await Promise.all(approvals.map(userBlock));
+				const changeBlocks = await Promise.all(changesRequested.map(userBlock));
+				const awaitingBlocks = await Promise.all(awaitingReviewers.map(userBlock));
+				const commented = [...latestReviews.entries()].filter(
+					([user, state]) => state === "COMMENTED" && user !== author && user !== "zura-adod").map(([user]) => user);
+				const totalReviewerSet = new Set([...requestedReviewers, ...approvals, ...changesRequested, ...commented, ]);
+				const totalReviewers = totalReviewerSet.size;
+				const approvalHeader = `Approvals (${approvals.length}/${totalReviewers})`;
+				const changesHeader = `Changes Requested (${changesRequested.length}/${totalReviewers})`;
+				const commentedHeader = `Commented (${commented.length}/${totalReviewers})`;
+				const awaitingHeader = `Awaiting (${awaitingReviewers.length}/${totalReviewers})`;
+				const statusLabel = `<span class="label-status ${
               pr.draft ? "label-draft" : "label-open"
             }">${pr.draft ? "Draft" : "Open"}</span>`;
-            const row = document.createElement("tr");
-            row.className = pr.draft ? "draft" : "";
-            row.innerHTML = `
+				const row = document.createElement("tr");
+				row.className = pr.draft ? "draft" : "";
+				row.innerHTML = `
         <td><div style="display: flex; gap: 0.5rem; align-items: flex-start;">
           <div style="flex-shrink: 0;">${statusLabel}</div>
           <a href="${
@@ -610,59 +594,76 @@
               awaitingBlocks.join("") || "None"
             }</div></td>
       `;
-            tbody.appendChild(row);
-          }
-          if (tbody.children.length > 0) {
-            const headerLabel = `📁 ${cleanRepoName} ${
+				tbody.appendChild(row);
+			}
+			if(tbody.children.length > 0) {
+				const headerLabel = `📁 ${cleanRepoName} ${
               hasNew ? '<span class="new-tag">New Pulls</span>' : ""
             }`;
-            section.innerHTML = `
-        <h2 onclick="window.open('https://github.com/${ORG}/${repo}/pulls')">${headerLabel}</h2>
-        <div style="overflow-x:auto;">
-          <table class="pr-table">
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Author</th>
-                <th>Created</th>
-                <th>Stats</th>
-                <th></th>
-                <th></th>
-                <th></th>
-                <th></th>
-              </tr>
-            </thead>
-          </table>
-        </div>
-      `;
-            section.querySelector("table").appendChild(tbody);
-            container.appendChild(section);
-          }
-          container.appendChild(section);
-          const loadedSoFar = container.children.length;
-          loadingMessage.innerText = `${loadedSoFar}/${REPOS.length} Repositories Loaded`;
-        }
-        document.getElementById("loader").style.display = "none";
-      }
-      window.addEventListener("DOMContentLoaded", () => {
-        if (localStorage.getItem("dark_mode") === "true") {
-          document.body.classList.add("dark-mode");
-          document.getElementById("darkToggle").checked = true;
-        }
-        document
-          .getElementById("darkToggle")
-          .addEventListener("change", (e) => {
-            document.body.classList.toggle("dark-mode", e.target.checked);
-            localStorage.setItem("dark_mode", e.target.checked);
-          });
-        const savedToken = localStorage.getItem("github_token");
-        const savedUsername = localStorage.getItem("github_username");
-        if (savedToken && savedUsername) {
-          document.getElementById("token").value = savedToken;
-          document.getElementById("username").value = savedUsername;
-          loadPRs();
-        }
-      });
-    </script>
-  </body>
+				const collapsedKey = `collapsed_${repo}`;
+				const isCollapsed = localStorage.getItem(collapsedKey) === "true";
+				section.classList.toggle("collapsed", isCollapsed);
+				section.innerHTML = `
+  <h2>
+<h2>
+  <a href="https://github.com/${ORG}/${repo}/pulls" target="_blank" class="repo-link-icon" onclick="event.stopPropagation()">🔗</a>
+  <span class="header-title" style="flex-grow: 1; cursor: pointer;">${headerLabel}</span>
+  <span class="collapse-toggle">${isCollapsed ? "◁" : "▼"}</span>
+</h2>
+
+  </h2>
+  <div style="overflow-x:auto;">
+    <table class="pr-table">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Author</th>
+          <th>Created</th>
+          <th>Stats</th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+        </tr>
+      </thead>
+    </table>
+  </div>
+`;
+				section.querySelector("table").appendChild(tbody);
+				container.appendChild(section);
+				// Add toggle handler
+				section.querySelector(".header-title").addEventListener("click", () => {
+					const currentlyCollapsed = section.classList.toggle("collapsed");
+					localStorage.setItem(collapsedKey, currentlyCollapsed);
+					section.querySelector(".collapse-toggle").textContent = currentlyCollapsed ? "◁" : "▼";
+				});
+				section.querySelector("table").appendChild(tbody);
+				container.appendChild(section);
+			}
+			container.appendChild(section);
+			const loadedSoFar = container.children.length;
+			loadingMessage.innerText = `${loadedSoFar}/${REPOS.length} Repositories Loaded`;
+		}
+		document.getElementById("loader").style.display = "none";
+	}
+	window.addEventListener("DOMContentLoaded", () => {
+		if(localStorage.getItem("dark_mode") === "true") {
+			document.body.classList.add("dark-mode");
+			document.getElementById("darkToggle").checked = true;
+		}
+		document.getElementById("darkToggle").addEventListener("change", (e) => {
+			document.body.classList.toggle("dark-mode", e.target.checked);
+			localStorage.setItem("dark_mode", e.target.checked);
+		});
+		const savedToken = localStorage.getItem("github_token");
+		const savedUsername = localStorage.getItem("github_username");
+		if(savedToken && savedUsername) {
+			document.getElementById("token").value = savedToken;
+			document.getElementById("username").value = savedUsername;
+			loadPRs();
+		}
+	});
+	</script>
+</body>
+
 </html>
