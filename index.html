@@ -368,6 +368,16 @@
 		color: #58a6ff;
 	}
 
+	.repo-pr-count {
+		color: #888;
+		font-weight: normal;
+		margin-left: 0.25rem;
+	}
+
+	.dark-mode .repo-pr-count {
+		color: #aaa;
+	}
+
 	@media (max-width: 768px) {
 		body {
 			padding: 1rem;
@@ -597,7 +607,10 @@
 				tbody.appendChild(row);
 			}
 			if(tbody.children.length > 0) {
-				const headerLabel = `📁 ${cleanRepoName} ${
+				const prCount = tbody.children.length;
+				const headerLabel = `📁 ${cleanRepoName} <span class="repo-pr-count">(${prCount} Pull${
+              prCount !== 1 ? "s" : ""
+            })</span> ${
               hasNew ? '<span class="new-tag">New Pulls</span>' : ""
             }`;
 				const collapsedKey = `collapsed_${repo}`;
