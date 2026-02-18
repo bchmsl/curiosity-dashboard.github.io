@@ -1,7 +1,7 @@
 /***********************
  * App metadata
  ***********************/
-const APP_VERSION = "v1.3.0";
+const APP_VERSION = "v3.0.0";
 
 /***********************
  * Config
