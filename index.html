@@ -1,104 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Curiosity Squad Active Pull Requests Dashboard</title>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Curiosity Squad Active Pull Requests Dashboard</title>
 
-  <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles.css"/>
 </head>
 
 <body>
 <div class="top-header">
-  <h1>✨ Curiosity Squad Active Pull Requests Dashboard</h1>
+    <h1>✨ Curiosity Squad Active Pull Requests Dashboard</h1>
 
-  <div class="dark-mode-toggle">
-    <label><input type="checkbox" id="darkToggle" /> Dark Mode</label>
-  </div>
-
-  <div class="input-row">
-    <div>
-      <label for="token">GitHub Token:</label><br />
-      <input type="password" id="token" placeholder="Paste your GitHub token here" />
+    <div class="dark-mode-toggle">
+        <label><input type="checkbox" id="darkToggle"/> Dark Mode</label>
     </div>
 
-    <div>
-      <label for="username">Your GitHub Username:</label><br />
-      <input type="text" id="username" placeholder="(Optional) Auto-detected from token" />
+    <div class="input-row">
+        <div>
+            <label for="token">GitHub Token:</label><br/>
+            <input type="password" id="token" placeholder="Paste your GitHub token here"/>
+        </div>
+
+        <div>
+            <label for="username">Your GitHub Username:</label><br/>
+            <input type="text" id="username" placeholder="(Optional) Auto-detected from token"/>
+        </div>
+
+        <div class="load-button">
+            <button id="loadBtn">Load PRs</button>
+        </div>
     </div>
 
-    <div class="load-button">
-      <button id="loadBtn">Load PRs</button>
+    <!-- ✅ Filters -->
+    <div class="filters-row">
+        <div class="filters-group">
+            <span class="filters-title">My work:</span>
+
+            <label class="filter-chip">
+                <input type="checkbox" id="filterAwaitingMyReview"/>
+                Awaiting my review (not reviewed yet)
+            </label>
+
+            <label class="filter-chip">
+                <input type="checkbox" id="filterReviewedNotApproved"/>
+                Reviewed by me (not approved)
+            </label>
+        </div>
+
+        <div class="filters-group">
+            <span class="filters-title">Custom:</span>
+
+            <label class="filter-select">
+                Approvals:
+                <select id="approvalFilter">
+                    <option value="any">Any</option>
+                    <option value="gte2">≥ 2</option>
+                    <option value="lt2">&lt; 2</option>
+                    <option value="eq0">= 0</option>
+                    <option value="gte1">≥ 1</option>
+                </select>
+            </label>
+
+            <label class="filter-select">
+                New:
+                <select id="newFilter">
+                    <option value="any">Any</option>
+                    <option value="onlyNew">New only</option>
+                    <option value="notNew">Not new</option>
+                </select>
+            </label>
+
+            <label class="filter-select">
+                Drafts:
+                <select id="draftFilter">
+                    <option value="any">Any</option>
+                    <option value="hideDrafts" selected>Hide drafts</option>
+                    <option value="onlyDrafts">Drafts only</option>
+                </select>
+            </label>
+
+            <button id="clearFiltersBtn" class="clear-filters-btn" type="button">Clear</button>
+            <button id="savePresetBtn" class="save-preset-btn" type="button">Save</button>
+        </div>
     </div>
-  </div>
 
-  <!-- ✅ Filters -->
-  <div class="filters-row">
-    <div class="filters-group">
-      <span class="filters-title">My work:</span>
+    <!-- ✅ Presets bar -->
+    <div id="presetsBar" class="presets-bar" style="display:none"></div>
 
-      <label class="filter-chip">
-        <input type="checkbox" id="filterAwaitingMyReview" />
-        Awaiting my review (not reviewed yet)
-      </label>
-
-      <label class="filter-chip">
-        <input type="checkbox" id="filterReviewedNotApproved" />
-        Reviewed by me (not approved)
-      </label>
-    </div>
-
-    <div class="filters-group">
-      <span class="filters-title">Custom:</span>
-
-      <label class="filter-select">
-        Approvals:
-        <select id="approvalFilter">
-          <option value="any">Any</option>
-          <option value="gte2">≥ 2</option>
-          <option value="lt2">&lt; 2</option>
-          <option value="eq0">= 0</option>
-          <option value="gte1">≥ 1</option>
-        </select>
-      </label>
-
-      <label class="filter-select">
-        New:
-        <select id="newFilter">
-          <option value="any">Any</option>
-          <option value="onlyNew">New only</option>
-          <option value="notNew">Not new</option>
-        </select>
-      </label>
-
-      <label class="filter-select">
-        Drafts:
-        <select id="draftFilter">
-          <option value="any">Any</option>
-          <option value="hideDrafts" selected>Hide drafts</option>
-          <option value="onlyDrafts">Drafts only</option>
-        </select>
-      </label>
-
-      <button id="clearFiltersBtn" class="clear-filters-btn" type="button">Clear</button>
-      <button id="savePresetBtn" class="save-preset-btn" type="button">Save</button>
-    </div>
-  </div>
-
-  <!-- ✅ Presets bar -->
-  <div id="presetsBar" class="presets-bar" style="display:none"></div>
-
-  <div id="errorBanner" class="error-banner" style="display:none"></div>
+    <div id="errorBanner" class="error-banner" style="display:none"></div>
 </div>
 
 <div id="loader">
-  <div class="shimmer-bar"></div>
-  <div class="loading-text">
-    <span id="loadingMessage">Loading…</span><span class="dots"></span>
-  </div>
+    <div class="shimmer-bar"></div>
+    <div class="loading-text">
+        <span id="loadingMessage">Loading…</span><span class="dots"></span>
+    </div>
 </div>
 
 <div id="productSections"></div>
+
+<!-- ✅ Footer -->
+<footer class="app-footer">
+    <div class="footer-left">
+        <span class="footer-app">Curiosity Squad PR Dashboard</span>
+        <span class="footer-dot">•</span>
+        <span class="footer-version" id="appVersion">v—</span>
+        <span class="footer-dot">•</span>
+        <span class="footer-year" id="appYear">—</span>
+    </div>
+
+    <div class="footer-right">
+        <span class="footer-credit">Built by <strong>Bachana</strong> • Curiosity Squad</span>
+        <span class="footer-sep">|</span>
+        <span class="footer-note">Uses GitHub API. Token stays in your browser storage. GitHub is a trademark of GitHub, Inc.</span>
+    </div>
+</footer>
 
 <script src="./index.js"></script>
 </body>
