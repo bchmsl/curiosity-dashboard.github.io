@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Curiosity Squad Active Pull Requests Dashboard</title>
 
-    <link rel="stylesheet" href="./styles.css"/>
+    <link rel="stylesheet" href="./styles.css" />
 </head>
 
 <body>
@@ -13,18 +13,18 @@
     <h1>✨ Curiosity Squad Active Pull Requests Dashboard</h1>
 
     <div class="dark-mode-toggle">
-        <label><input type="checkbox" id="darkToggle"/> Dark Mode</label>
+        <label><input type="checkbox" id="darkToggle" /> Dark Mode</label>
     </div>
 
     <div class="input-row">
         <div>
-            <label for="token">GitHub Token:</label><br/>
-            <input type="password" id="token" placeholder="Paste your GitHub token here"/>
+            <label for="token">GitHub Token:</label><br />
+            <input type="password" id="token" placeholder="Paste your GitHub token here" />
         </div>
 
         <div>
-            <label for="username">Your GitHub Username:</label><br/>
-            <input type="text" id="username" placeholder="(Optional) Auto-detected from token"/>
+            <label for="username">Your GitHub Username:</label><br />
+            <input type="text" id="username" placeholder="(Optional) Auto-detected from token" />
         </div>
 
         <div class="load-button">
@@ -38,12 +38,12 @@
             <span class="filters-title">My work:</span>
 
             <label class="filter-chip">
-                <input type="checkbox" id="filterAwaitingMyReview"/>
+                <input type="checkbox" id="filterAwaitingMyReview" />
                 Awaiting my review (not reviewed yet)
             </label>
 
             <label class="filter-chip">
-                <input type="checkbox" id="filterReviewedNotApproved"/>
+                <input type="checkbox" id="filterReviewedNotApproved" />
                 Reviewed by me (not approved)
             </label>
         </div>
@@ -111,9 +111,11 @@
     </div>
 
     <div class="footer-right">
-        <span class="footer-credit">Built by <strong>Bachana</strong> • Curiosity Squad</span>
+        <span class="footer-credit">Built by <strong><a href="https://github.com/bchmsl">@bchmsl</a></strong> • Curiosity Squad</span>
         <span class="footer-sep">|</span>
-        <span class="footer-note">Uses GitHub API. Token stays in your browser storage. GitHub is a trademark of GitHub, Inc.</span>
+        <span class="footer-note">
+        Uses GitHub API. Token stays in your browser storage. GitHub is a trademark of GitHub, Inc.
+      </span>
     </div>
 </footer>
 
