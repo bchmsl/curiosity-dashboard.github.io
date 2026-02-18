@@ -1,3 +1,4 @@
+// index.js
 /***********************
  * Config
  ***********************/
@@ -15,8 +16,13 @@ const REPOS = [
 const REPO_CONCURRENCY = 3;
 const PR_CONCURRENCY = 4;
 
-const STORAGE_KEYS = {
+// ✅ Safer storage split:
+// - token is session-only (less risky)
+// - username/dark/collapse live in localStorage
+const SESSION_KEYS = {
   token: "github_token",
+};
+const LOCAL_KEYS = {
   username: "github_username",
   darkMode: "dark_mode",
   collapsedPrefix: "collapsed_",
@@ -174,10 +180,23 @@ async function renderUserBlock(username, reviewer, headers) {
 /***********************
  * Review parsing
  ***********************/
+// ✅ Robust: truly "latest" by submitted_at (not array order)
 function buildLatestReviewStateMap(reviews) {
-  const latest = new Map();
-  for (const review of reviews) latest.set(review.user.login, review.state);
-  return latest;
+  const latest = new Map(); // user -> {state, time}
+
+  for (const r of reviews || []) {
+    const user = r?.user?.login;
+    if (!user) continue;
+
+    const t = new Date(r.submitted_at || r?.submitted_at || 0).getTime();
+    const prev = latest.get(user);
+
+    if (!prev || t > prev.time) {
+      latest.set(user, { state: r.state, time: t });
+    }
+  }
+
+  return new Map([...latest.entries()].map(([u, v]) => [u, v.state]));
 }
 
 function pickUsersByState(latestReviewMap, state) {
@@ -192,13 +211,12 @@ function computeCommenters(latestReviewMap, author) {
         if (state !== "COMMENTED") return false;
         if (user === author) return false;
         return !IGNORED_COMMENTERS.has(user);
-
       })
       .map(([user]) => user);
 }
 
 function computeAwaitingReviewers(requestedReviewers, reviews) {
-  const submitted = new Set(reviews.map((r) => r.user.login));
+  const submitted = new Set((reviews || []).map((r) => r.user.login));
   return requestedReviewers.filter((r) => !submitted.has(r));
 }
 
@@ -215,7 +233,7 @@ function cleanRepoName(repo) {
 }
 
 function collapsedKey(repo) {
-  return `${STORAGE_KEYS.collapsedPrefix}${repo}`;
+  return `${LOCAL_KEYS.collapsedPrefix}${repo}`;
 }
 
 function isRepoCollapsed(repo) {
@@ -232,6 +250,7 @@ function renderStatusLabel(isDraft) {
   </span>`;
 }
 
+// ✅ wrapper class added: .pr-table-wrap
 function renderSectionHeaderHtml({ repo, headerLabel, collapsed }) {
   return `
     <h2>
@@ -240,7 +259,7 @@ function renderSectionHeaderHtml({ repo, headerLabel, collapsed }) {
       <span class="collapse-toggle">${collapsed ? "◁" : "▼"}</span>
     </h2>
 
-    <div style="overflow-x:auto;">
+    <div class="pr-table-wrap">
       <table class="pr-table">
         <thead>
           <tr>
@@ -248,10 +267,10 @@ function renderSectionHeaderHtml({ repo, headerLabel, collapsed }) {
             <th>Author</th>
             <th>Created</th>
             <th>Stats</th>
-            <th></th>
-            <th></th>
-            <th></th>
-            <th></th>
+            <th>Approvals</th>
+            <th>Changes Requested</th>
+            <th>Commented</th>
+            <th>Awaiting</th>
           </tr>
         </thead>
       </table>
@@ -313,11 +332,12 @@ function createPlaceholderSection(repo) {
   section.innerHTML = renderSectionHeaderHtml({ repo, headerLabel, collapsed });
 
   const holder = document.createElement("div");
-  holder.style.padding = "0.75rem";
-  holder.style.opacity = "0.85";
+  holder.className = "repo-loading";
   holder.innerHTML = `⏳ Loading repository…`;
 
+  // IMPORTANT: placeholder content goes under header, not inside table wrap
   section.appendChild(holder);
+
   attachCollapseHandler(section, repo);
 
   section.dataset.repo = repo;
@@ -353,7 +373,7 @@ async function renderPrRow({ pr, reviewer, headers }) {
   let commitCount = "—";
   let fileCount = -1;
 
-  const requestedReviewers = pr.requested_reviewers.map((r) => r.login);
+  const requestedReviewers = (pr.requested_reviewers || []).map((r) => r.login);
   const iAmRequestedReviewer = requestedReviewers.includes(reviewer);
 
   let myReviewCount = -1;
@@ -389,7 +409,12 @@ async function renderPrRow({ pr, reviewer, headers }) {
 
     approvalCount = approvals.length;
 
-    const myReviews = reviews.filter((r) => r?.user?.login === reviewer);
+    // my latest review by submitted_at
+    const myReviews = (reviews || [])
+        .filter((r) => r?.user?.login === reviewer)
+        .slice()
+        .sort((a, b) => new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime());
+
     myReviewCount = myReviews.length;
     if (myReviews.length > 0) myLatestReviewState = myReviews[myReviews.length - 1].state || "unknown";
     else myLatestReviewState = "none";
@@ -424,12 +449,13 @@ async function renderPrRow({ pr, reviewer, headers }) {
   const tr = document.createElement("tr");
   tr.className = pr.draft ? "draft" : "";
 
+  // ✅ data-label added for ALL columns (mobile cards)
   tr.innerHTML = `
-    <td>
+    <td data-label="Title">
       <div style="display: flex; gap: 0.5rem; align-items: flex-start;">
         <div style="flex-shrink: 0;">${statusLabel}</div>
         <a href="${pr.html_url}" target="_blank" style="display: inline-block; white-space: normal;">
-          ${pr.title}
+          ${escapeHtml(pr.title)}
           <span style="color: #57606a; font-weight: normal;">#${pr.number}</span>
         </a>
       </div>
@@ -449,10 +475,10 @@ async function renderPrRow({ pr, reviewer, headers }) {
       ${statsNote}
     </td>
 
-    <td><div><strong>${approvalHeader}</strong><br>${approvalsHtml}</div></td>
-    <td><div><strong>${changesHeader}</strong><br>${changesHtml}</div></td>
-    <td><div><strong>${commentedHeader}</strong><br>${commentedHtml}</div></td>
-    <td><div><strong>${awaitingHeader}</strong><br>${awaitingHtml}</div></td>
+    <td data-label="Approvals"><div><strong>${approvalHeader}</strong><br>${approvalsHtml}</div></td>
+    <td data-label="Changes"><div><strong>${changesHeader}</strong><br>${changesHtml}</div></td>
+    <td data-label="Commented"><div><strong>${commentedHeader}</strong><br>${commentedHtml}</div></td>
+    <td data-label="Awaiting"><div><strong>${awaitingHeader}</strong><br>${awaitingHtml}</div></td>
   `;
 
   setRowMeta(tr, {
@@ -489,8 +515,7 @@ async function buildRepoSection({ repo, reviewer, headers }) {
     section.innerHTML = renderSectionHeaderHtml({ repo, headerLabel, collapsed });
 
     const msg = document.createElement("div");
-    msg.style.padding = "0.75rem";
-    msg.style.opacity = "0.9";
+    msg.className = "repo-error";
     msg.innerHTML = `⚠️ Failed to load this repository.<br><span style="font-size:0.85rem; opacity:0.85;">${escapeHtml(
         formatError(e)
     )}</span>`;
@@ -632,7 +657,8 @@ function clearFilters() {
 
   $(FILTER_IDS.approvalMode).value = "any";
   $(FILTER_IDS.newMode).value = "any";
-  $(FILTER_IDS.draftMode).value = "any";
+  // ✅ keep your default behavior
+  $(FILTER_IDS.draftMode).value = "hideDrafts";
 
   applyFilters();
 }
@@ -676,8 +702,9 @@ async function loadPRs() {
     }
   }
 
-  localStorage.setItem(STORAGE_KEYS.token, token);
-  localStorage.setItem(STORAGE_KEYS.username, reviewer);
+  // ✅ session-only token
+  sessionStorage.setItem(SESSION_KEYS.token, token);
+  localStorage.setItem(LOCAL_KEYS.username, reviewer);
 
   userCache.clear();
 
@@ -728,7 +755,7 @@ async function loadPRs() {
  * Dark mode + init
  ***********************/
 function applySavedDarkMode() {
-  const enabled = localStorage.getItem(STORAGE_KEYS.darkMode) === "true";
+  const enabled = localStorage.getItem(LOCAL_KEYS.darkMode) === "true";
   document.body.classList.toggle("dark-mode", enabled);
   $("darkToggle").checked = enabled;
 }
@@ -736,7 +763,7 @@ function applySavedDarkMode() {
 function setupDarkModeToggle() {
   $("darkToggle").addEventListener("change", (e) => {
     document.body.classList.toggle("dark-mode", e.target.checked);
-    localStorage.setItem(STORAGE_KEYS.darkMode, String(e.target.checked));
+    localStorage.setItem(LOCAL_KEYS.darkMode, String(e.target.checked));
   });
 }
 
@@ -745,15 +772,11 @@ function setupLoadButton() {
 }
 
 function restoreSavedCredentialsAndAutoload() {
-  const savedToken = localStorage.getItem(STORAGE_KEYS.token);
-  const savedUsername = localStorage.getItem(STORAGE_KEYS.username);
+  const savedToken = sessionStorage.getItem(SESSION_KEYS.token);
+  const savedUsername = localStorage.getItem(LOCAL_KEYS.username);
 
-  if (savedToken) {
-    $("token").value = savedToken;
-  }
-  if (savedUsername) {
-    $("username").value = savedUsername;
-  }
+  if (savedToken) $("token").value = savedToken;
+  if (savedUsername) $("username").value = savedUsername;
 
   if (savedToken) {
     loadPRs();
