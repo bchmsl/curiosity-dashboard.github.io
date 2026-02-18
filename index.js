@@ -18,7 +18,7 @@ const PR_CONCURRENCY = 4;
 
 // ✅ Safer storage split:
 // - token is session-only (less risky)
-// - username/dark/collapse/filters live in localStorage
+// - username/dark/collapse/filters/presets live in localStorage
 const SESSION_KEYS = {
   token: "github_token",
 };
@@ -26,7 +26,8 @@ const LOCAL_KEYS = {
   username: "github_username",
   darkMode: "dark_mode",
   collapsedPrefix: "collapsed_",
-  filters: "filters_state_v1", // ✅ persisted filters
+  filters: "filters_state_v2",
+  presets: "filters_presets_v1",
 };
 
 const IGNORED_COMMENTERS = new Set(["zura-adod"]);
@@ -181,7 +182,6 @@ async function renderUserBlock(username, reviewer, headers) {
 /***********************
  * Review parsing
  ***********************/
-// ✅ Robust: truly "latest" by submitted_at (not array order)
 function buildLatestReviewStateMap(reviews) {
   const latest = new Map(); // user -> {state, time}
 
@@ -251,7 +251,6 @@ function renderStatusLabel(isDraft) {
   </span>`;
 }
 
-// ✅ wrapper class added: .pr-table-wrap
 function renderSectionHeaderHtml({ repo, headerLabel, collapsed }) {
   return `
     <h2>
@@ -408,7 +407,6 @@ async function renderPrRow({ pr, reviewer, headers }) {
 
     approvalCount = approvals.length;
 
-    // my latest review by submitted_at
     const myReviews = (reviews || [])
         .filter((r) => r?.user?.login === reviewer)
         .slice()
@@ -547,7 +545,7 @@ async function buildRepoSection({ repo, reviewer, headers }) {
 }
 
 /***********************
- * Filters (with persistence)
+ * Filters (with persistence + presets)
  ***********************/
 const FILTER_IDS = {
   awaitingMyReview: "filterAwaitingMyReview",
@@ -562,65 +560,234 @@ const DEFAULT_FILTERS = {
   reviewedNotApproved: false,
   approvalMode: "any",
   newMode: "any",
-  draftMode: "hideDrafts", // ✅ matches HTML default
+  draftMode: "hideDrafts",
 };
 
-function getFilterState() {
+// ✅ Preset selection state
+let activePresetId = null;
+
+function normalizeFilters(filters) {
   return {
+    awaitingMyReview: !!filters.awaitingMyReview,
+    reviewedNotApproved: !!filters.reviewedNotApproved,
+    approvalMode: String(filters.approvalMode ?? DEFAULT_FILTERS.approvalMode),
+    newMode: String(filters.newMode ?? DEFAULT_FILTERS.newMode),
+    draftMode: String(filters.draftMode ?? DEFAULT_FILTERS.draftMode),
+  };
+}
+
+function filtersEqual(a, b) {
+  const A = normalizeFilters(a);
+  const B = normalizeFilters(b);
+  return (
+      A.awaitingMyReview === B.awaitingMyReview &&
+      A.reviewedNotApproved === B.reviewedNotApproved &&
+      A.approvalMode === B.approvalMode &&
+      A.newMode === B.newMode &&
+      A.draftMode === B.draftMode
+  );
+}
+
+function getFilterState() {
+  return normalizeFilters({
     awaitingMyReview: $(FILTER_IDS.awaitingMyReview).checked,
     reviewedNotApproved: $(FILTER_IDS.reviewedNotApproved).checked,
     approvalMode: $(FILTER_IDS.approvalMode).value,
     newMode: $(FILTER_IDS.newMode).value,
     draftMode: $(FILTER_IDS.draftMode).value,
-  };
+  });
 }
 
 function saveFiltersToStorage(filters) {
   try {
-    localStorage.setItem(LOCAL_KEYS.filters, JSON.stringify(filters));
-  } catch {
-    // ignore (storage full/blocked)
-  }
+    localStorage.setItem(LOCAL_KEYS.filters, JSON.stringify(normalizeFilters(filters)));
+  } catch { /* ignore */ }
 }
 
 function loadFiltersFromStorage() {
   try {
     const raw = localStorage.getItem(LOCAL_KEYS.filters);
     if (!raw) return null;
-    const parsed = JSON.parse(raw);
-
-    // basic validation + fallback to defaults
-    return {
-      awaitingMyReview: typeof parsed.awaitingMyReview === "boolean" ? parsed.awaitingMyReview : DEFAULT_FILTERS.awaitingMyReview,
-      reviewedNotApproved: typeof parsed.reviewedNotApproved === "boolean" ? parsed.reviewedNotApproved : DEFAULT_FILTERS.reviewedNotApproved,
-      approvalMode: typeof parsed.approvalMode === "string" ? parsed.approvalMode : DEFAULT_FILTERS.approvalMode,
-      newMode: typeof parsed.newMode === "string" ? parsed.newMode : DEFAULT_FILTERS.newMode,
-      draftMode: typeof parsed.draftMode === "string" ? parsed.draftMode : DEFAULT_FILTERS.draftMode,
-    };
+    return normalizeFilters(JSON.parse(raw));
   } catch {
     return null;
   }
 }
 
 function setFiltersUI(filters) {
-  $(FILTER_IDS.awaitingMyReview).checked = !!filters.awaitingMyReview;
-  $(FILTER_IDS.reviewedNotApproved).checked = !!filters.reviewedNotApproved;
-
-  $(FILTER_IDS.approvalMode).value = filters.approvalMode ?? DEFAULT_FILTERS.approvalMode;
-  $(FILTER_IDS.newMode).value = filters.newMode ?? DEFAULT_FILTERS.newMode;
-  $(FILTER_IDS.draftMode).value = filters.draftMode ?? DEFAULT_FILTERS.draftMode;
+  const f = normalizeFilters(filters);
+  $(FILTER_IDS.awaitingMyReview).checked = f.awaitingMyReview;
+  $(FILTER_IDS.reviewedNotApproved).checked = f.reviewedNotApproved;
+  $(FILTER_IDS.approvalMode).value = f.approvalMode;
+  $(FILTER_IDS.newMode).value = f.newMode;
+  $(FILTER_IDS.draftMode).value = f.draftMode;
 }
 
 function restoreSavedFilters() {
   const saved = loadFiltersFromStorage();
-  if (saved) {
-    setFiltersUI(saved);
-  } else {
-    // ensure defaults are applied if nothing saved
-    setFiltersUI(DEFAULT_FILTERS);
+  if (saved) setFiltersUI(saved);
+  else setFiltersUI(DEFAULT_FILTERS);
+}
+
+/******** Presets storage ********/
+function loadPresets() {
+  try {
+    const raw = localStorage.getItem(LOCAL_KEYS.presets);
+    const arr = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(arr)) return [];
+    return arr
+        .filter((p) => p && typeof p.id === "string" && typeof p.name === "string" && p.filters)
+        .map((p) => ({ ...p, filters: normalizeFilters(p.filters) }));
+  } catch {
+    return [];
   }
 }
 
+function savePresets(presets) {
+  try {
+    localStorage.setItem(LOCAL_KEYS.presets, JSON.stringify(presets));
+  } catch { /* ignore */ }
+}
+
+function findPresetById(presets, id) {
+  return presets.find((p) => p.id === id) || null;
+}
+
+function findPresetByName(presets, name) {
+  const n = String(name || "").trim().toLowerCase();
+  return presets.find((p) => p.name.trim().toLowerCase() === n) || null;
+}
+
+/******** Presets UI ********/
+function renderPresetsBar() {
+  const bar = $("presetsBar");
+  const presets = loadPresets();
+
+  if (presets.length === 0) {
+    bar.innerHTML = "";
+    hide(bar);
+    return;
+  }
+
+  show(bar);
+  bar.innerHTML = presets.map((p) => {
+    const active = p.id === activePresetId;
+    return `
+      <button class="preset-chip ${active ? "active" : ""}" data-preset-id="${p.id}" type="button">
+        ${escapeHtml(p.name)}
+      </button>
+    `;
+  }).join("");
+
+  // attach click handlers
+  bar.querySelectorAll(".preset-chip").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-preset-id");
+      applyPresetById(id);
+    });
+  });
+}
+
+function applyPresetById(presetId) {
+  const presets = loadPresets();
+  const preset = findPresetById(presets, presetId);
+  if (!preset) return;
+
+  activePresetId = preset.id;
+  setFiltersUI(preset.filters);
+  saveFiltersToStorage(preset.filters);
+  applyFilters({ persist: false });
+
+  // refresh UI
+  renderPresetsBar();
+  updateSaveDeleteButton();
+}
+
+function resolveActivePresetFromCurrentFilters() {
+  const presets = loadPresets();
+  const current = getFilterState();
+  const match = presets.find((p) => filtersEqual(p.filters, current)) || null;
+  activePresetId = match ? match.id : null;
+}
+
+function updateSaveDeleteButton() {
+  const btn = $("savePresetBtn");
+  const presets = loadPresets();
+  const current = getFilterState();
+
+  const active = activePresetId ? findPresetById(presets, activePresetId) : null;
+  const isExactActive = active ? filtersEqual(active.filters, current) : false;
+
+  if (active && isExactActive) {
+    btn.textContent = "Delete";
+    btn.classList.add("delete-mode");
+  } else {
+    btn.textContent = "Save";
+    btn.classList.remove("delete-mode");
+  }
+}
+
+function onSaveOrDeletePresetClick() {
+  const presets = loadPresets();
+  const current = getFilterState();
+
+  const active = activePresetId ? findPresetById(presets, activePresetId) : null;
+  const isExactActive = active ? filtersEqual(active.filters, current) : false;
+
+  // DELETE mode
+  if (active && isExactActive) {
+    const ok = confirm(`Delete preset "${active.name}"?`);
+    if (!ok) return;
+
+    const next = presets.filter((p) => p.id !== active.id);
+    savePresets(next);
+
+    activePresetId = null;
+    renderPresetsBar();
+    updateSaveDeleteButton();
+    return;
+  }
+
+  // SAVE mode
+  const suggested = active ? active.name : "";
+  const name = prompt("Name this filter preset:", suggested);
+  if (!name) return;
+
+  const trimmed = name.trim();
+  if (!trimmed) return;
+
+  const existingByName = findPresetByName(presets, trimmed);
+
+  let next = presets.slice();
+  let savedId;
+
+  if (existingByName) {
+    const overwrite = confirm(`Preset "${existingByName.name}" already exists. Overwrite it?`);
+    if (!overwrite) return;
+
+    const updated = { ...existingByName, name: trimmed, filters: current, updatedAt: Date.now() };
+    next = next.map((p) => (p.id === existingByName.id ? updated : p));
+    savedId = existingByName.id;
+  } else {
+    const id = String(Date.now());
+    next.unshift({
+      id,
+      name: trimmed,
+      filters: current,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+    savedId = id;
+  }
+
+  savePresets(next);
+  activePresetId = savedId;
+
+  renderPresetsBar();
+  updateSaveDeleteButton();
+}
+
+/******** Filtering core ********/
 function matchesApprovalMode(approvalCount, mode) {
   if (mode === "any") return true;
   if (approvalCount < 0) return false;
@@ -683,7 +850,11 @@ function updateRepoHeaderCount(section, visibleCount, totalCount) {
 
 function applyFilters({ persist = true } = {}) {
   const filters = getFilterState();
+
   if (persist) saveFiltersToStorage(filters);
+
+  // ✅ if current filters match any preset -> treat it as active (even if user got there manually)
+  resolveActivePresetFromCurrentFilters();
 
   const sections = document.querySelectorAll(".product-section");
   for (const section of sections) {
@@ -702,11 +873,16 @@ function applyFilters({ persist = true } = {}) {
     updateRepoHeaderCount(section, visible, totalCount);
     section.style.display = visible === 0 ? "none" : "";
   }
+
+  renderPresetsBar();
+  updateSaveDeleteButton();
 }
 
 function clearFilters() {
   setFiltersUI(DEFAULT_FILTERS);
   saveFiltersToStorage(DEFAULT_FILTERS);
+
+  activePresetId = null;
   applyFilters({ persist: false });
 }
 
@@ -721,6 +897,7 @@ function setupFilters() {
   $(FILTER_IDS.draftMode).addEventListener("change", onChange);
 
   $("clearFiltersBtn").addEventListener("click", clearFilters);
+  $("savePresetBtn").addEventListener("click", onSaveOrDeletePresetClick);
 }
 
 /***********************
@@ -751,7 +928,6 @@ async function loadPRs() {
     }
   }
 
-  // ✅ session-only token
   sessionStorage.setItem(SESSION_KEYS.token, token);
   localStorage.setItem(LOCAL_KEYS.username, reviewer);
 
@@ -785,7 +961,7 @@ async function loadPRs() {
     loadedCount++;
     setLoadingProgress(loadedCount, REPOS.length);
 
-    applyFilters({ persist: false }); // just apply to newly loaded rows
+    applyFilters({ persist: false });
   });
 
   hide(loader);
@@ -827,9 +1003,7 @@ function restoreSavedCredentialsAndAutoload() {
   if (savedToken) $("token").value = savedToken;
   if (savedUsername) $("username").value = savedUsername;
 
-  if (savedToken) {
-    loadPRs();
-  }
+  if (savedToken) loadPRs();
 }
 
 function init() {
@@ -839,10 +1013,12 @@ function init() {
   applySavedDarkMode();
   setupDarkModeToggle();
 
-  // ✅ restore filters BEFORE wiring listeners & applying
   restoreSavedFilters();
-  setupFilters();
+  resolveActivePresetFromCurrentFilters();
+  renderPresetsBar();
+  updateSaveDeleteButton();
 
+  setupFilters();
   setupLoadButton();
 
   applyFilters({ persist: false });

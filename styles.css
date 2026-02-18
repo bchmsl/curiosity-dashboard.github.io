@@ -146,6 +146,25 @@ button:hover {
   background: #444c56;
 }
 
+/* ✅ Save/Delete preset button */
+.save-preset-btn {
+  margin-top: 0;
+  padding: 0.35rem 0.75rem;
+  background: #2c3e50;
+}
+
+.save-preset-btn:hover {
+  background: #34495e;
+}
+
+.save-preset-btn.delete-mode {
+  background: #b42318; /* red-ish */
+}
+
+.save-preset-btn.delete-mode:hover {
+  background: #8f1b13;
+}
+
 /* Dropdown filters */
 .filter-select {
   display: inline-flex;
@@ -173,6 +192,49 @@ button:hover {
 .dark-mode .filter-select select {
   border: 1px solid #30363d;
   color: #c9d1d9;
+}
+
+/* ✅ Presets bar */
+.presets-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: -0.25rem;
+  padding: 0.25rem 0;
+}
+
+.preset-chip {
+  margin-top: 0;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid #d0d7de;
+  background: #fff;
+  color: #2c3e50;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.preset-chip:hover {
+  background: #eef2f6;
+}
+
+.preset-chip.active {
+  border-color: #2c3e50;
+  font-weight: 700;
+}
+
+.dark-mode .preset-chip {
+  border: 1px solid #30363d;
+  background: #161b22;
+  color: #c9d1d9;
+}
+
+.dark-mode .preset-chip:hover {
+  background: #1b2430;
+}
+
+.dark-mode .preset-chip.active {
+  border-color: #58a6ff;
 }
 
 /* Loader */
@@ -264,7 +326,6 @@ button:hover {
   opacity: 0.9;
 }
 
-/* ✅ wrapper for collapsing */
 .pr-table-wrap {
   overflow-x: auto;
 }
@@ -324,7 +385,6 @@ a:hover {
   display: inline-block;
 }
 
-/* ✅ dark-mode highlight fix */
 .dark-mode .highlight {
   color: #ff7ab6;
   background: rgba(214, 51, 132, 0.12);
@@ -423,7 +483,6 @@ a:hover {
   font-weight: 600;
 }
 
-/* ✅ collapse now hides the wrapper cleanly */
 .product-section.collapsed .pr-table-wrap {
   display: none;
 }
