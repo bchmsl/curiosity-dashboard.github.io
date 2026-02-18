@@ -18,7 +18,7 @@ const PR_CONCURRENCY = 4;
 
 // ✅ Safer storage split:
 // - token is session-only (less risky)
-// - username/dark/collapse live in localStorage
+// - username/dark/collapse/filters live in localStorage
 const SESSION_KEYS = {
   token: "github_token",
 };
@@ -26,6 +26,7 @@ const LOCAL_KEYS = {
   username: "github_username",
   darkMode: "dark_mode",
   collapsedPrefix: "collapsed_",
+  filters: "filters_state_v1", // ✅ persisted filters
 };
 
 const IGNORED_COMMENTERS = new Set(["zura-adod"]);
@@ -188,7 +189,7 @@ function buildLatestReviewStateMap(reviews) {
     const user = r?.user?.login;
     if (!user) continue;
 
-    const t = new Date(r.submitted_at || r?.submitted_at || 0).getTime();
+    const t = new Date(r.submitted_at || 0).getTime();
     const prev = latest.get(user);
 
     if (!prev || t > prev.time) {
@@ -335,9 +336,7 @@ function createPlaceholderSection(repo) {
   holder.className = "repo-loading";
   holder.innerHTML = `⏳ Loading repository…`;
 
-  // IMPORTANT: placeholder content goes under header, not inside table wrap
   section.appendChild(holder);
-
   attachCollapseHandler(section, repo);
 
   section.dataset.repo = repo;
@@ -449,7 +448,6 @@ async function renderPrRow({ pr, reviewer, headers }) {
   const tr = document.createElement("tr");
   tr.className = pr.draft ? "draft" : "";
 
-  // ✅ data-label added for ALL columns (mobile cards)
   tr.innerHTML = `
     <td data-label="Title">
       <div style="display: flex; gap: 0.5rem; align-items: flex-start;">
@@ -549,7 +547,7 @@ async function buildRepoSection({ repo, reviewer, headers }) {
 }
 
 /***********************
- * Filters
+ * Filters (with persistence)
  ***********************/
 const FILTER_IDS = {
   awaitingMyReview: "filterAwaitingMyReview",
@@ -557,6 +555,14 @@ const FILTER_IDS = {
   approvalMode: "approvalFilter",
   newMode: "newFilter",
   draftMode: "draftFilter",
+};
+
+const DEFAULT_FILTERS = {
+  awaitingMyReview: false,
+  reviewedNotApproved: false,
+  approvalMode: "any",
+  newMode: "any",
+  draftMode: "hideDrafts", // ✅ matches HTML default
 };
 
 function getFilterState() {
@@ -567,6 +573,52 @@ function getFilterState() {
     newMode: $(FILTER_IDS.newMode).value,
     draftMode: $(FILTER_IDS.draftMode).value,
   };
+}
+
+function saveFiltersToStorage(filters) {
+  try {
+    localStorage.setItem(LOCAL_KEYS.filters, JSON.stringify(filters));
+  } catch {
+    // ignore (storage full/blocked)
+  }
+}
+
+function loadFiltersFromStorage() {
+  try {
+    const raw = localStorage.getItem(LOCAL_KEYS.filters);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+
+    // basic validation + fallback to defaults
+    return {
+      awaitingMyReview: typeof parsed.awaitingMyReview === "boolean" ? parsed.awaitingMyReview : DEFAULT_FILTERS.awaitingMyReview,
+      reviewedNotApproved: typeof parsed.reviewedNotApproved === "boolean" ? parsed.reviewedNotApproved : DEFAULT_FILTERS.reviewedNotApproved,
+      approvalMode: typeof parsed.approvalMode === "string" ? parsed.approvalMode : DEFAULT_FILTERS.approvalMode,
+      newMode: typeof parsed.newMode === "string" ? parsed.newMode : DEFAULT_FILTERS.newMode,
+      draftMode: typeof parsed.draftMode === "string" ? parsed.draftMode : DEFAULT_FILTERS.draftMode,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function setFiltersUI(filters) {
+  $(FILTER_IDS.awaitingMyReview).checked = !!filters.awaitingMyReview;
+  $(FILTER_IDS.reviewedNotApproved).checked = !!filters.reviewedNotApproved;
+
+  $(FILTER_IDS.approvalMode).value = filters.approvalMode ?? DEFAULT_FILTERS.approvalMode;
+  $(FILTER_IDS.newMode).value = filters.newMode ?? DEFAULT_FILTERS.newMode;
+  $(FILTER_IDS.draftMode).value = filters.draftMode ?? DEFAULT_FILTERS.draftMode;
+}
+
+function restoreSavedFilters() {
+  const saved = loadFiltersFromStorage();
+  if (saved) {
+    setFiltersUI(saved);
+  } else {
+    // ensure defaults are applied if nothing saved
+    setFiltersUI(DEFAULT_FILTERS);
+  }
 }
 
 function matchesApprovalMode(approvalCount, mode) {
@@ -629,8 +681,9 @@ function updateRepoHeaderCount(section, visibleCount, totalCount) {
   }
 }
 
-function applyFilters() {
+function applyFilters({ persist = true } = {}) {
   const filters = getFilterState();
+  if (persist) saveFiltersToStorage(filters);
 
   const sections = document.querySelectorAll(".product-section");
   for (const section of sections) {
@@ -652,24 +705,20 @@ function applyFilters() {
 }
 
 function clearFilters() {
-  $(FILTER_IDS.awaitingMyReview).checked = false;
-  $(FILTER_IDS.reviewedNotApproved).checked = false;
-
-  $(FILTER_IDS.approvalMode).value = "any";
-  $(FILTER_IDS.newMode).value = "any";
-  // ✅ keep your default behavior
-  $(FILTER_IDS.draftMode).value = "hideDrafts";
-
-  applyFilters();
+  setFiltersUI(DEFAULT_FILTERS);
+  saveFiltersToStorage(DEFAULT_FILTERS);
+  applyFilters({ persist: false });
 }
 
 function setupFilters() {
-  $(FILTER_IDS.awaitingMyReview).addEventListener("change", applyFilters);
-  $(FILTER_IDS.reviewedNotApproved).addEventListener("change", applyFilters);
+  const onChange = () => applyFilters({ persist: true });
 
-  $(FILTER_IDS.approvalMode).addEventListener("change", applyFilters);
-  $(FILTER_IDS.newMode).addEventListener("change", applyFilters);
-  $(FILTER_IDS.draftMode).addEventListener("change", applyFilters);
+  $(FILTER_IDS.awaitingMyReview).addEventListener("change", onChange);
+  $(FILTER_IDS.reviewedNotApproved).addEventListener("change", onChange);
+
+  $(FILTER_IDS.approvalMode).addEventListener("change", onChange);
+  $(FILTER_IDS.newMode).addEventListener("change", onChange);
+  $(FILTER_IDS.draftMode).addEventListener("change", onChange);
 
   $("clearFiltersBtn").addEventListener("click", clearFilters);
 }
@@ -736,7 +785,7 @@ async function loadPRs() {
     loadedCount++;
     setLoadingProgress(loadedCount, REPOS.length);
 
-    applyFilters();
+    applyFilters({ persist: false }); // just apply to newly loaded rows
   });
 
   hide(loader);
@@ -789,10 +838,14 @@ function init() {
 
   applySavedDarkMode();
   setupDarkModeToggle();
-  setupLoadButton();
+
+  // ✅ restore filters BEFORE wiring listeners & applying
+  restoreSavedFilters();
   setupFilters();
 
-  applyFilters();
+  setupLoadButton();
+
+  applyFilters({ persist: false });
   restoreSavedCredentialsAndAutoload();
 }
 
