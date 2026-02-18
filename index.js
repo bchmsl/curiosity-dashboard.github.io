@@ -1,4 +1,3 @@
-// index.js
 /***********************
  * Config
  ***********************/
@@ -16,9 +15,6 @@ const REPOS = [
 const REPO_CONCURRENCY = 3;
 const PR_CONCURRENCY = 4;
 
-// ✅ Safer storage split:
-// - token is session-only (less risky)
-// - username/dark/collapse/filters/presets live in localStorage
 const SESSION_KEYS = {
   token: "github_token",
 };
@@ -170,12 +166,25 @@ function getUser(username, headers) {
   return userCache.get(username);
 }
 
+function escapeHtml(str) {
+  return String(str)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+}
+
 async function renderUserBlock(username, reviewer, headers) {
   const highlightClass = username === reviewer ? "highlight" : "";
   const user = await getUser(username, headers);
 
-  return `<div class="user-block ${highlightClass}">
-    <img src="${user.avatar_url}" alt="${username}" /> ${username}
+  const safeUsername = escapeHtml(username);
+
+  // ✅ Native tooltip: full username on hover
+  return `<div class="user-block ${highlightClass}" title="${safeUsername}">
+    <img src="${user.avatar_url}" alt="${safeUsername}" />
+    <span class="user-name" title="${safeUsername}">${safeUsername}</span>
   </div>`;
 }
 
@@ -251,6 +260,21 @@ function renderStatusLabel(isDraft) {
   </span>`;
 }
 
+/**
+ * ✅ Column width ratios (total 100%)
+ * Title gets the most.
+ */
+const COLUMN_WIDTHS = {
+  title: "35%",
+  author: "10%",
+  created: "5%",
+  stats: "15%",
+  approvals: "10%",
+  changes: "10%",
+  commented: "10%",
+  awaiting: "10%",
+};
+
 function renderSectionHeaderHtml({ repo, headerLabel, collapsed }) {
   return `
     <h2>
@@ -261,6 +285,17 @@ function renderSectionHeaderHtml({ repo, headerLabel, collapsed }) {
 
     <div class="pr-table-wrap">
       <table class="pr-table">
+        <colgroup>
+          <col class="col-title" style="width:${COLUMN_WIDTHS.title}">
+          <col class="col-author" style="width:${COLUMN_WIDTHS.author}">
+          <col class="col-created" style="width:${COLUMN_WIDTHS.created}">
+          <col class="col-stats" style="width:${COLUMN_WIDTHS.stats}">
+          <col class="col-approvals" style="width:${COLUMN_WIDTHS.approvals}">
+          <col class="col-changes" style="width:${COLUMN_WIDTHS.changes}">
+          <col class="col-commented" style="width:${COLUMN_WIDTHS.commented}">
+          <col class="col-awaiting" style="width:${COLUMN_WIDTHS.awaiting}">
+        </colgroup>
+
         <thead>
           <tr>
             <th>Title</th>
@@ -291,15 +326,6 @@ function attachCollapseHandler(sectionEl, repo) {
 
 function setLoadingProgress(loaded, total) {
   $("loadingMessage").innerText = `${loaded}/${total} Repositories Loaded`;
-}
-
-function escapeHtml(str) {
-  return String(str)
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
 }
 
 function formatError(e) {
@@ -443,6 +469,12 @@ async function renderPrRow({ pr, reviewer, headers }) {
   const commentedHeader = `Commented (${commented.length}/${totalReviewers})`;
   const awaitingHeader = `Awaiting (${awaitingReviewers.length}/${totalReviewers})`;
 
+  // ✅ Faded columns when empty
+  const approvalsEmptyClass = approvals.length === 0 ? "empty-column" : "";
+  const changesEmptyClass = changesRequested.length === 0 ? "empty-column" : "";
+  const commentedEmptyClass = commented.length === 0 ? "empty-column" : "";
+  const awaitingEmptyClass = awaitingReviewers.length === 0 ? "empty-column" : "";
+
   const tr = document.createElement("tr");
   tr.className = pr.draft ? "draft" : "";
 
@@ -460,7 +492,10 @@ async function renderPrRow({ pr, reviewer, headers }) {
     <td data-label="Author">${authorBlock}</td>
 
     <td data-label="Created">
-      ${timeAgo(pr.created_at)} ${newPR ? '<span class="new-tag">New</span>' : ""}
+        <div class="created-cell">
+            <span class="created-time">${timeAgo(pr.created_at)}</span>
+                ${newPR ? '<span class="new-tag">New</span>' : ""}
+        </div>
     </td>
 
     <td data-label="Stats">
@@ -471,10 +506,21 @@ async function renderPrRow({ pr, reviewer, headers }) {
       ${statsNote}
     </td>
 
-    <td data-label="Approvals"><div><strong>${approvalHeader}</strong><br>${approvalsHtml}</div></td>
-    <td data-label="Changes"><div><strong>${changesHeader}</strong><br>${changesHtml}</div></td>
-    <td data-label="Commented"><div><strong>${commentedHeader}</strong><br>${commentedHtml}</div></td>
-    <td data-label="Awaiting"><div><strong>${awaitingHeader}</strong><br>${awaitingHtml}</div></td>
+    <td data-label="Approvals" class="${approvalsEmptyClass}">
+      <div><strong>${approvalHeader}</strong><br>${approvalsHtml}</div>
+    </td>
+
+    <td data-label="Changes" class="${changesEmptyClass}">
+      <div><strong>${changesHeader}</strong><br>${changesHtml}</div>
+    </td>
+
+    <td data-label="Commented" class="${commentedEmptyClass}">
+      <div><strong>${commentedHeader}</strong><br>${commentedHtml}</div>
+    </td>
+
+    <td data-label="Awaiting" class="${awaitingEmptyClass}">
+      <div><strong>${awaitingHeader}</strong><br>${awaitingHtml}</div>
+    </td>
   `;
 
   setRowMeta(tr, {
@@ -563,7 +609,6 @@ const DEFAULT_FILTERS = {
   draftMode: "hideDrafts",
 };
 
-// ✅ Preset selection state
 let activePresetId = null;
 
 function normalizeFilters(filters) {
@@ -629,7 +674,6 @@ function restoreSavedFilters() {
   else setFiltersUI(DEFAULT_FILTERS);
 }
 
-/******** Presets storage ********/
 function loadPresets() {
   try {
     const raw = localStorage.getItem(LOCAL_KEYS.presets);
@@ -658,7 +702,6 @@ function findPresetByName(presets, name) {
   return presets.find((p) => p.name.trim().toLowerCase() === n) || null;
 }
 
-/******** Presets UI ********/
 function renderPresetsBar() {
   const bar = $("presetsBar");
   const presets = loadPresets();
@@ -679,7 +722,6 @@ function renderPresetsBar() {
     `;
   }).join("");
 
-  // attach click handlers
   bar.querySelectorAll(".preset-chip").forEach((btn) => {
     btn.addEventListener("click", () => {
       const id = btn.getAttribute("data-preset-id");
@@ -698,7 +740,6 @@ function applyPresetById(presetId) {
   saveFiltersToStorage(preset.filters);
   applyFilters({ persist: false });
 
-  // refresh UI
   renderPresetsBar();
   updateSaveDeleteButton();
 }
@@ -734,7 +775,6 @@ function onSaveOrDeletePresetClick() {
   const active = activePresetId ? findPresetById(presets, activePresetId) : null;
   const isExactActive = active ? filtersEqual(active.filters, current) : false;
 
-  // DELETE mode
   if (active && isExactActive) {
     const ok = confirm(`Delete preset "${active.name}"?`);
     if (!ok) return;
@@ -748,7 +788,6 @@ function onSaveOrDeletePresetClick() {
     return;
   }
 
-  // SAVE mode
   const suggested = active ? active.name : "";
   const name = prompt("Name this filter preset:", suggested);
   if (!name) return;
@@ -787,7 +826,6 @@ function onSaveOrDeletePresetClick() {
   updateSaveDeleteButton();
 }
 
-/******** Filtering core ********/
 function matchesApprovalMode(approvalCount, mode) {
   if (mode === "any") return true;
   if (approvalCount < 0) return false;
@@ -853,7 +891,6 @@ function applyFilters({ persist = true } = {}) {
 
   if (persist) saveFiltersToStorage(filters);
 
-  // ✅ if current filters match any preset -> treat it as active (even if user got there manually)
   resolveActivePresetFromCurrentFilters();
 
   const sections = document.querySelectorAll(".product-section");
@@ -916,7 +953,6 @@ async function loadPRs() {
 
   const headers = buildHeaders(token);
 
-  // ✅ Auto-detect username from token if empty
   if (!reviewer) {
     try {
       const me = await fetchAuthenticatedUser(headers);
@@ -976,9 +1012,6 @@ async function loadPRs() {
   }
 }
 
-/***********************
- * Dark mode + init
- ***********************/
 function applySavedDarkMode() {
   const enabled = localStorage.getItem(LOCAL_KEYS.darkMode) === "true";
   document.body.classList.toggle("dark-mode", enabled);

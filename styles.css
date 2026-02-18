@@ -4,28 +4,23 @@
    THEME TOKENS (Light by default)
    ========================================================= */
 :root {
-  /* Core surfaces */
   --bg: #f6f7fb;
   --surface: #ffffff;
   --surface-2: #f2f4f8;
 
-  /* Text */
   --text: #101828;
   --muted: #475467;
   --muted-2: #667085;
 
-  /* Borders / shadows */
   --border: rgba(16, 24, 40, 0.12);
   --border-strong: rgba(16, 24, 40, 0.18);
   --shadow-1: 0 1px 2px rgba(16, 24, 40, 0.08);
   --shadow-2: 0 8px 24px rgba(16, 24, 40, 0.10);
 
-  /* Brand */
-  --brand: #3b82f6;            /* blue */
-  --brand-2: #1d4ed8;          /* darker blue */
+  --brand: #3b82f6;
+  --brand-2: #1d4ed8;
   --brand-soft: rgba(59, 130, 246, 0.14);
 
-  /* Accents */
   --success: #16a34a;
   --success-soft: rgba(22, 163, 74, 0.14);
 
@@ -38,7 +33,6 @@
   --pink: #db2777;
   --pink-soft: rgba(219, 39, 119, 0.12);
 
-  /* UI */
   --link: var(--brand-2);
   --link-hover: #1e40af;
 
@@ -67,9 +61,6 @@
   --radius: 12px;
 }
 
-/* =========================================================
-   DARK MODE TOKENS
-   ========================================================= */
 body.dark-mode {
   --bg: #0b1020;
   --surface: #111827;
@@ -126,9 +117,6 @@ body.dark-mode {
   --loader-2: #3a4663;
 }
 
-/* =========================================================
-   BASE
-   ========================================================= */
 * { box-sizing: border-box; }
 
 body {
@@ -150,9 +138,6 @@ a {
 
 a:hover { text-decoration: underline; color: var(--link-hover); }
 
-/* =========================================================
-   ERROR BANNER
-   ========================================================= */
 .error-banner {
   margin-top: 0.75rem;
   padding: 0.75rem 1rem;
@@ -163,9 +148,6 @@ a:hover { text-decoration: underline; color: var(--link-hover); }
   font-weight: 700;
 }
 
-/* =========================================================
-   TOP HEADER LAYOUT
-   ========================================================= */
 .top-header {
   display: flex;
   flex-direction: column;
@@ -221,9 +203,6 @@ input[type="password"]:focus {
   box-shadow: 0 0 0 4px var(--brand-soft);
 }
 
-/* =========================================================
-   BUTTONS
-   ========================================================= */
 button {
   padding: 0.55rem 1rem;
   background-color: var(--btn-bg);
@@ -249,7 +228,6 @@ button:focus-visible {
   box-shadow: 0 0 0 4px var(--brand-soft), var(--shadow-2);
 }
 
-/* Filters UI */
 .filters-row {
   display: flex;
   flex-wrap: wrap;
@@ -272,7 +250,6 @@ button:focus-visible {
   margin-right: 0.25rem;
 }
 
-/* Filter chips */
 .filter-chip {
   display: inline-flex;
   align-items: center;
@@ -292,7 +269,6 @@ button:focus-visible {
 
 .filter-chip input { margin: 0; accent-color: var(--brand); }
 
-/* Dropdown filters */
 .filter-select {
   display: inline-flex;
   align-items: center;
@@ -319,7 +295,6 @@ button:focus-visible {
   box-shadow: 0 0 0 4px var(--brand-soft);
 }
 
-/* Clear + Save preset buttons (smaller) */
 .clear-filters-btn,
 .save-preset-btn {
   margin-top: 0;
@@ -333,9 +308,7 @@ button:focus-visible {
   border: 1px solid var(--border);
 }
 
-.clear-filters-btn:hover {
-  background: rgba(16, 24, 40, 0.12);
-}
+.clear-filters-btn:hover { background: rgba(16, 24, 40, 0.12); }
 
 body.dark-mode .clear-filters-btn {
   background: rgba(255, 255, 255, 0.06);
@@ -355,11 +328,8 @@ body.dark-mode .clear-filters-btn {
   color: #0b1020;
 }
 
-.save-preset-btn.delete-mode:hover {
-  background: #ff4d6d;
-}
+.save-preset-btn.delete-mode:hover { background: #ff4d6d; }
 
-/* Presets bar */
 .presets-bar {
   display: flex;
   flex-wrap: wrap;
@@ -392,9 +362,7 @@ body.dark-mode .clear-filters-btn {
   font-weight: 800;
 }
 
-/* =========================================================
-   LOADER
-   ========================================================= */
+/* Loader */
 #loader {
   display: flex;
   flex-direction: column;
@@ -438,9 +406,7 @@ body.dark-mode .clear-filters-btn {
   100% { content: "..."; }
 }
 
-/* =========================================================
-   SECTIONS
-   ========================================================= */
+/* Sections */
 .product-section {
   margin-top: 2rem;
   padding: 1rem;
@@ -500,6 +466,28 @@ body.dark-mode .clear-filters-btn {
   color: var(--text);
 }
 
+.pr-table th:nth-child(3),
+.pr-table td:nth-child(3) {
+  white-space: nowrap;
+  padding-left: 0.65rem;
+  padding-right: 0.65rem;
+}
+
+.pr-table th:nth-child(4),
+.pr-table td:nth-child(4) {
+  padding-left: 0.70rem;
+  padding-right: 0.70rem;
+  font-size: 0.95rem;
+}
+
+.pr-table td:nth-child(1) a { line-height: 1.25; }
+
+.pr-table th:nth-child(n+5),
+.pr-table td:nth-child(n+5) {
+  padding-left: 0.70rem;
+  padding-right: 0.70rem;
+}
+
 .pr-table th {
   background: var(--table-head-bg);
   color: var(--table-head-text);
@@ -513,10 +501,38 @@ body.dark-mode .clear-filters-btn {
   background-color: var(--row-hover);
 }
 
-/* Draft row */
 .draft { opacity: 0.65; }
 
-/* Highlight block */
+/* ✅ User block with ellipsis + hover tooltip works via title attribute */
+.user-block {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  flex-wrap: nowrap;
+  overflow: hidden;
+  white-space: nowrap;
+  max-width: 100%;
+
+  margin-bottom: 0.25rem;
+  color: var(--text);
+}
+
+.user-block img {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  flex: 0 0 auto;
+}
+
+.user-block .user-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .highlight {
   font-weight: 800;
   color: var(--highlight-text);
@@ -526,24 +542,6 @@ body.dark-mode .clear-filters-btn {
   display: inline-block;
 }
 
-/* User block */
-.user-block {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.25rem;
-  flex-wrap: wrap;
-  color: var(--text);
-}
-
-.user-block img {
-  width: 20px;
-  height: 20px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-}
-
-/* Status labels */
 .label-status {
   display: inline-block;
   padding: 2px 10px;
@@ -581,10 +579,8 @@ body.dark-mode .clear-filters-btn {
   font-weight: 800;
 }
 
-/* Collapse */
 .product-section.collapsed .pr-table-wrap { display: none; }
 
-/* Header icons */
 .collapse-toggle {
   font-size: 0.9rem;
   color: var(--muted-2);
@@ -605,9 +601,7 @@ body.dark-mode .clear-filters-btn {
   margin-left: 0.25rem;
 }
 
-/* =========================================================
-   MOBILE
-   ========================================================= */
+/* Mobile */
 @media (max-width: 768px) {
   body { padding: 1rem; }
 
@@ -653,4 +647,30 @@ body.dark-mode .clear-filters-btn {
     display: block;
     margin-bottom: 0.25rem;
   }
+}
+
+/* ✅ Fade review columns when there are no users */
+.pr-table td.empty-column {
+  opacity: 0.45;
+}
+
+/* Keep hover readable (optional) */
+.pr-table tbody tr:hover td.empty-column {
+  opacity: 0.65;
+}
+
+/* Created cell: wrap "New" tag to next line if it doesn't fit */
+.created-cell {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem; /* row-gap, col-gap */
+}
+
+.created-time {
+  white-space: nowrap; /* keep "2h ago" together */
+}
+
+.created-cell .new-tag {
+  flex: 0 0 auto;
 }
