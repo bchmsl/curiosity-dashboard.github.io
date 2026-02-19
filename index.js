@@ -10,6 +10,7 @@ const REPOS = [
   "Android-Space-Feature-CardOrder",
   "Android-Space-Feature-DigitalCardOrder",
   "Android-Space-Feature-Remittance",
+  "Android-Space-Feature-CreditCard",
 ];
 
 const REPO_CONCURRENCY = 3;
