@@ -278,7 +278,7 @@ function renderStatusLabel(isDraft) {
  * Title gets the most.
  */
 const COLUMN_WIDTHS = {
-    title: "35%",
+    title: "30%",
     author: "10%",
     created: "5%",
     stats: "15%",
