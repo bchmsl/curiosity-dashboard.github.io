@@ -8,13 +8,14 @@ const APP_VERSION = "v3.0.0";
  ***********************/
 const ORG = "SpaceBank";
 const REPOS = [
-    "Android-Space-Feature-Payment",
-    "Android-Space-Feature-Transfers",
-    "Android-Space-Feature-Deposit",
-    "Android-Space-Feature-Cards",
-    "Android-Space-Feature-CardOrder",
-    "Android-Space-Feature-DigitalCardOrder",
-    "Android-Space-Feature-Remittance",
+  "Android-Space-Feature-Payment",
+  "Android-Space-Feature-Transfers",
+  "Android-Space-Feature-Deposit",
+  "Android-Space-Feature-Cards",
+  "Android-Space-Feature-CardOrder",
+  "Android-Space-Feature-DigitalCardOrder",
+  "Android-Space-Feature-Remittance",
+  "Android-Space-Feature-CreditCard",
 ];
 
 const REPO_CONCURRENCY = 3;
