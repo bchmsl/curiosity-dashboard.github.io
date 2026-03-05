@@ -21,10 +21,8 @@ const REPOS = [
 const REPO_CONCURRENCY = 3;
 const PR_CONCURRENCY = 4;
 
-const SESSION_KEYS = {
-    token: "github_token",
-};
 const LOCAL_KEYS = {
+    token: "github_token",
     username: "github_username",
     darkMode: "dark_mode",
     collapsedPrefix: "collapsed_",
@@ -240,7 +238,7 @@ function computeCommenters(latestReviewMap, author) {
 }
 
 function computeAwaitingReviewers(requestedReviewers, reviews) {
-    const submitted = new Set((reviews || []).map((r) => r.user.login));
+    const submitted = new Set((reviews || []).map((r) => r?.user?.login).filter(Boolean));
     return requestedReviewers.filter((r) => !submitted.has(r));
 }
 
@@ -980,7 +978,7 @@ async function loadPRs() {
         }
     }
 
-    sessionStorage.setItem(SESSION_KEYS.token, token);
+    localStorage.setItem(LOCAL_KEYS.token, token);
     localStorage.setItem(LOCAL_KEYS.username, reviewer);
 
     userCache.clear();
@@ -1060,7 +1058,7 @@ function setupLoadButton() {
 }
 
 function restoreSavedCredentialsAndAutoload() {
-    const savedToken = sessionStorage.getItem(SESSION_KEYS.token);
+    const savedToken = localStorage.getItem(LOCAL_KEYS.token);
     const savedUsername = localStorage.getItem(LOCAL_KEYS.username);
 
     if (savedToken) $("token").value = savedToken;
